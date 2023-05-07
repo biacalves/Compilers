@@ -211,3 +211,11 @@ void mml::xml_writer::do_next_node(mml::next_node * const node, int lvl) {
   // EMPTY
 }
 
+void mml::xml_writer::do_return_node(mml::return_node * const node, int lvl) {
+  // EMPTY
+}
+
+void mml::xml_writer::do_block_node(mml::block_node * const node, int lvl) {
+  // EMPTY
+}
+
