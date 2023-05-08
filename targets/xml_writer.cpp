@@ -235,3 +235,10 @@ void mml::xml_writer::do_sizeof_node(mml::sizeof_node * const node, int lvl) {
   // EMPTY
 }
 
+void mml::xml_writer::do_index_node(mml::index_node * const node, int lvl) {
+  // EMPTY
+}
+
+void mml::xml_writer::do_identity_node(mml::identity_node * const node, int lvl) {
+  // EMPTY
+}
