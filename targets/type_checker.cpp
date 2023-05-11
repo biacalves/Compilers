@@ -232,3 +232,11 @@ void mml::type_checker::do_index_node(mml::index_node *const node, int lvl) {
 void mml::type_checker::do_identity_node(mml::identity_node *const node, int lvl) {
   // EMPTY
 }
+
+void mml::type_checker::do_mem_alloc_node(mml::mem_alloc_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::type_checker::do_address_node(mml::address_node *const node, int lvl) {
+  // EMPTY
+}
