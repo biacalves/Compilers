@@ -2,6 +2,7 @@
 #define __MML_AST_RETURN_NODE_H__
 
 #include <cdk/ast/expression_node.h>
+#include <cdk/ast/basic_node.h>
 
 namespace mml {
 
@@ -12,7 +13,7 @@ namespace mml {
     cdk::expression_node *_retval;
 
   public:
-    inline return_node(int lineno, cdk::expression_node *retval) :
+    inline return_node(int lineno, cdk::expression_node *retval = nullptr) :
         cdk::basic_node(lineno), _retval(retval) {
     }
 
