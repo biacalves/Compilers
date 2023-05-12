@@ -20,6 +20,7 @@ namespace mml {
     inline cdk::sequence_node *declarations() {
       return _declarations;
     }
+    
     inline cdk::sequence_node *instructions() {
       return _instructions;
     }

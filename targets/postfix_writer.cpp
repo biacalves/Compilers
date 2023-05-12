@@ -177,7 +177,7 @@ void mml::postfix_writer::do_program_node(mml::program_node * const node, int lv
   _pf.LABEL("_main");
   _pf.ENTER(0);  // MML doesn't implement local variables
 
-  node->statements()->accept(this, lvl);
+ // node->statements()->accept(this, lvl);
 
   // end the main function
   _pf.INT(0);
@@ -318,5 +318,9 @@ void mml::postfix_writer::do_mem_alloc_node(mml::mem_alloc_node * const node, in
 }
 
 void mml::postfix_writer::do_address_node(mml::address_node * const node, int lvl) {
+  // EMPTY
+}
+
+void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const node, int lvl) {
   // EMPTY
 }

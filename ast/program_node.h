@@ -9,16 +9,20 @@ namespace mml {
    * Class for describing program nodes.
    */
   class program_node: public cdk::basic_node {
-    cdk::basic_node *_statements;
+    cdk::sequence_node *_declarations, *_instructions;
 
   public:
-    inline program_node(int lineno, cdk::basic_node *statements) :
-        cdk::basic_node(lineno), _statements(statements) {
+    inline program_node(int lineno, cdk::sequence_node *declarations, cdk::sequence_node *instructions) :
+        cdk::basic_node(lineno), _declarations(declarations), _instructions(instructions) {
     }
 
   public:
-    inline cdk::basic_node *statements() {
-      return _statements;
+    inline cdk::sequence_node *declarations() {
+      return _declarations;
+    }
+    
+    inline cdk::sequence_node *instructions() {
+      return _instructions;
     }
 
     void accept(basic_ast_visitor *sp, int level) {
