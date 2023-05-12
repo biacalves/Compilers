@@ -244,3 +244,15 @@ void mml::type_checker::do_address_node(mml::address_node *const node, int lvl) 
 void mml::type_checker::do_variable_decl_node(mml::variable_decl_node *const node, int lvl) {
   // EMPTY
 }
+
+void mml::type_checker::do_func_definition_node(mml::func_definition_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::type_checker::do_func_declaration_node(mml::func_declaration_node *const node, int lvl) {
+  // EMPTY
+}
+
+void mml::type_checker::do_func_call_node(mml::func_call_node *const node, int lvl) {
+  // EMPTY
+}
