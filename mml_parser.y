@@ -63,7 +63,7 @@ list : stmt	     { $$ = new cdk::sequence_node(LINE, $1); }
 	   ;
 
 stmt : expr ';'                         { $$ = new mml::evaluation_node(LINE, $1); }
- 	   | tPRINT expr ';'                  { $$ = new mml::print_node(LINE, $2); }
+ 	   | tPRINT expr ';'                  { $$ = new mml::print_node(LINE, $2, false); }
 //--     | tREAD lval ';'                   { $$ = new mml::read_node(LINE, $2); }
      | tWHILE '(' expr ')' stmt         { $$ = new mml::while_node(LINE, $3, $5); }
      | tIF '(' expr ')' stmt %prec tIFX { $$ = new mml::if_node(LINE, $3, $5); }

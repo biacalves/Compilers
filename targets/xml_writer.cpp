@@ -223,10 +223,6 @@ void mml::xml_writer::do_input_node(mml::input_node * const node, int lvl) {
   // EMPTY
 }
 
-void mml::xml_writer::do_write_node(mml::write_node * const node, int lvl) {
-  // EMPTY
-}
-
 void mml::xml_writer::do_null_node(mml::null_node * const node, int lvl) {
   // EMPTY
 }
