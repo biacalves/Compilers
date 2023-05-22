@@ -22,15 +22,15 @@ namespace mml {
     }
 
   public:
-    const std::string& identifier() const {
+    inline const std::string& identifier() const {
       return _identifier;
     }
 
-    cdk::sequence_node* arguments() {
+    inline cdk::sequence_node* arguments() {
       return _arguments;
     }
 
-    cdk::expression_node* argument(size_t ax) {
+    inline cdk::expression_node* argument(size_t ax) {
       return dynamic_cast<cdk::expression_node*>(_arguments->node(ax));
     }
 

@@ -208,7 +208,7 @@ void mml::postfix_writer::do_evaluation_node(mml::evaluation_node * const node, 
 }
 
 void mml::postfix_writer::do_print_node(mml::print_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS;
+  /*ASSERT_SAFE_EXPRESSIONS;
   node->argument()->accept(this, lvl); // determine the value to print
   if (node->argument()->is_typed(cdk::TYPE_INT)) {
     _pf.CALL("printi");
@@ -220,7 +220,7 @@ void mml::postfix_writer::do_print_node(mml::print_node * const node, int lvl) {
     std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
     exit(1);
   }
-  _pf.CALL("println"); // print a newline
+  _pf.CALL("println"); // print a newline*/
 }
 
 //---------------------------------------------------------------------------
@@ -305,10 +305,6 @@ void mml::postfix_writer::do_index_node(mml::index_node * const node, int lvl) {
   // EMPTY
 }
 
-void mml::postfix_writer::do_identity_node(mml::identity_node * const node, int lvl) {
-  // EMPTY
-}
-
 void mml::postfix_writer::do_mem_alloc_node(mml::mem_alloc_node * const node, int lvl) {
   // EMPTY
 }
@@ -322,10 +318,6 @@ void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const 
 }
 
 void mml::postfix_writer::do_func_definition_node(mml::func_definition_node * const node, int lvl) {
-  // EMPTY
-}
-
-void mml::postfix_writer::do_func_declaration_node(mml::func_declaration_node * const node, int lvl) {
   // EMPTY
 }
 

@@ -235,10 +235,6 @@ void mml::xml_writer::do_index_node(mml::index_node * const node, int lvl) {
   // EMPTY
 }
 
-void mml::xml_writer::do_identity_node(mml::identity_node * const node, int lvl) {
-  // EMPTY
-}
-
 void mml::xml_writer::do_mem_alloc_node(mml::mem_alloc_node * const node, int lvl) {
   // EMPTY
 }
@@ -252,10 +248,6 @@ void mml::xml_writer::do_variable_decl_node(mml::variable_decl_node * const node
 }
 
 void mml::xml_writer::do_func_definition_node(mml::func_definition_node * const node, int lvl) {
-  // EMPTY
-}
-
-void mml::xml_writer::do_func_declaration_node(mml::func_declaration_node * const node, int lvl) {
   // EMPTY
 }
 

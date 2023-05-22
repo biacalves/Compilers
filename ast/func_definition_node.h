@@ -32,23 +32,23 @@ namespace mml {
     }
 
   public:
-    int qualifier() {
+    inline int qualifier() {
       return _qualifier;
     }
 
-    const std::string& identifier() const {
+    inline const std::string& identifier() const {
       return _identifier;
     }
 
-    cdk::sequence_node* arguments() {
+    inline cdk::sequence_node* arguments() {
       return _arguments;
     }
 
-    cdk::typed_node* argument(size_t ax) {
+    inline cdk::typed_node* argument(size_t ax) {
       return dynamic_cast<cdk::typed_node*>(_arguments->node(ax));
     }
 
-    block_node* block() {
+    inline block_node* block() {
       return _block;
     }
 
