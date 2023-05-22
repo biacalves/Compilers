@@ -34,7 +34,7 @@
 };
 
 %token tTYPE_INT tTYPE_DOUBLE tTYPE_STRING tTYPE_VOID
-%token tFOREIGN tFORWARD tPUBLIC tAUTO
+%token tFOREIGN tFORWARD tPUBLIC tAUTO tPRIVATE
 %token tIF tELIF tELSE tWHILE tSTOP tNEXT tRETURN
 %token tINPUT tNULL tSIZEOF
 %token tBEGIN tEND
@@ -61,16 +61,55 @@
 
 
 
-
-%type <node> stmt program
-%type <sequence> list
+%type <node> stmt program declaration 
+%type <sequence> list declarations 
 %type <expression> expr
 %type <lvalue> lval
+%type <type> type functype
 
 %{
 //-- The rules below will be included in yyparse, the main parsing function.
 %}
 %%
+
+file           : declarations program                       { compiler -> ast($1); compiler -> ast($2);}
+               | program                                    { compiler -> ast($1);}
+               | declarations                               { compiler -> ast($1);}
+               |                                            { compiler -> ast(new cdk::sequence_node(LINE));}
+               ;
+
+declarations   : declaration                                { $$ = new cdk::sequence_node(LINE, $1);}
+               | declarations declaration                   { $$ = new cdk::sequence_node(LINE, $2, $1);}
+               ;
+
+declaration    : tFOREIGN type tIDENTIFIER ";"              { $$ = new mml::variable_decl_node(LINE, tFOREIGN, $2, false, *$3, nullptr);}
+               | tFORWARD type tIDENTIFIER ";"              { $$ = new mml::variable_decl_node(LINE, tFORWARD, $2, false, *$3, nullptr);}
+               | tPUBLIC type tIDENTIFIER ";"               { $$ = new mml::variable_decl_node(LINE, tPUBLIC, $2, false, *$3, nullptr);}
+               | tFOREIGN type tIDENTIFIER "=" expr ";"     { $$ = new mml::variable_decl_node(LINE, tFOREIGN, $2, false, *$3, $5);}
+               | tFORWARD type tIDENTIFIER "=" expr ";"     { $$ = new mml::variable_decl_node(LINE, tFORWARD, $2, false, *$3, $5);}
+               | tPUBLIC type tIDENTIFIER "=" expr ";"      { $$ = new mml::variable_decl_node(LINE, tPUBLIC, $2, false, *$3, $5);}
+               | type tIDENTIFIER ";"                       { $$ = new mml::variable_decl_node(LINE, tPRIVATE, $1, false, *$2, nullptr);}
+               | type tIDENTIFIER "=" expr ";"              { $$ = new mml::variable_decl_node(LINE, tPRIVATE, $1, false, *$2, $4);}
+               | tFOREIGN tAUTO tIDENTIFIER "=" expr ";"    { $$ = new mml::variable_decl_node(LINE, tFOREIGN, true, *$3, $5);}
+               | tFORWARD tAUTO tIDENTIFIER "=" expr ";"    { $$ = new mml::variable_decl_node(LINE, tFORWARD, true, *$3, $5);}
+               | tPUBLIC tAUTO tIDENTIFIER "=" expr ";"     { $$ = new mml::variable_decl_node(LINE, tPUBLIC, true, *$3, $5);}
+               | tAUTO tIDENTIFIER "=" expr ";"             { $$ = new mml::variable_decl_node(LINE, tPRIVATE, true, *$2, $4);}
+               | tFOREIGN tIDENTIFIER "=" expr ";"          { $$ = new mml::variable_decl_node(LINE, tFOREIGN, false, *$2, $4);}
+               | tFORWARD tIDENTIFIER "=" expr ";"          { $$ = new mml::variable_decl_node(LINE, tFORWARD, false, *$2, $4);}
+               | tPUBLIC tIDENTIFIER "=" expr ";"           { $$ = new mml::variable_decl_node(LINE, tPUBLIC, false, *$2, $4);}
+               | tIDENTIFIER "=" expr ";"                   { $$ = new mml::variable_decl_node(LINE, tPRIVATE, false, *$1, $3);}
+               ;
+
+type           : tTYPE_INT                                  { $$ = cdk::primitive_type::create(4, cdk::TYPE_INT); }
+               | tTYPE_DOUBLE                               { $$ = cdk::primitive_type::create(8, cdk::TYPE_DOUBLE); }
+               | tTYPE_STRING                               { $$ = cdk::primitive_type::create(4, cdk::TYPE_STRING); }
+               | "[" type "]"                               { $$ = cdk::reference_type::create(4, $2); }
+               | functype                                   { $$ = $1;}
+               ;
+
+functype       : type "<" type ">"                          { $$ = $1;}
+               | type "<" ">"                               { $$ = $1;}
+               ;
 
 
 
@@ -90,8 +129,9 @@ stmt : expr ';'                         { $$ = new mml::evaluation_node(LINE, $1
      | '{' list '}'                     { $$ = $2; }
      ;
 
-expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
-	   | tSTRING                 { $$ = new cdk::string_node(LINE, $1); }
+expr : tINTEGER                                   { $$ = new cdk::integer_node(LINE, $1); }
+     | tDOUBLE                                    { $$ = new cdk::double_node(LINE, $1); }
+     | tSTRING                                    { $$ = new cdk::string_node(LINE, $1); }
      | '-' expr %prec tUNARY   { $$ = new cdk::neg_node(LINE, $2); }
      | expr '+' expr	         { $$ = new cdk::add_node(LINE, $1, $3); }
      | expr '-' expr	         { $$ = new cdk::sub_node(LINE, $1, $3); }

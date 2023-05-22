@@ -11,41 +11,28 @@ namespace mml {
    * Class for describing function definition nodes.
    */
   class func_definition_node: public cdk::typed_node {
-    int _qualifier;
-    std::string _identifier;
-    cdk::sequence_node *_arguments;
+    cdk::sequence_node *_variables;
     block_node *_block;
 
   public:
-    inline func_definition_node(int lineno, int qualifier, const std::string &identifier, 
-      cdk::sequence_node *arguments, block_node *block) :
-        cdk::typed_node(lineno), _qualifier(qualifier), _identifier(identifier), 
-        _arguments(arguments), _block(block) {
+    inline func_definition_node(int lineno, cdk::sequence_node *variables, block_node *block) :
+        cdk::typed_node(lineno), _variables(variables), _block(block) {
           type(cdk::primitive_type::create(0, cdk::TYPE_VOID));
     }
 
-    inline func_definition_node(int lineno, int qualifier, const std::string &identifier, 
-      cdk::sequence_node *arguments, std::shared_ptr<cdk::basic_type> funcType, block_node *block) :
-        cdk::typed_node(lineno), _qualifier(qualifier), _identifier(identifier), 
-        _arguments(arguments), _block(block) {
+    inline func_definition_node(int lineno, cdk::sequence_node *variables, 
+      std::shared_ptr<cdk::basic_type> funcType, block_node *block) :
+        cdk::typed_node(lineno), _variables(variables), _block(block) {
           type(funcType);
     }
 
   public:
-    inline int qualifier() {
-      return _qualifier;
+    inline cdk::sequence_node* variables() {
+      return _variables;
     }
 
-    inline const std::string& identifier() const {
-      return _identifier;
-    }
-
-    inline cdk::sequence_node* arguments() {
-      return _arguments;
-    }
-
-    inline cdk::typed_node* argument(size_t ax) {
-      return dynamic_cast<cdk::typed_node*>(_arguments->node(ax));
+    inline cdk::typed_node* variable(size_t ax) {
+      return dynamic_cast<cdk::typed_node*>(_variables->node(ax));
     }
 
     inline block_node* block() {

@@ -12,14 +12,20 @@ namespace mml {
    */
   class variable_decl_node: public cdk::typed_node {
     int _qualifier;
+    bool _isAuto;
     std::string _identifier;
     cdk::expression_node *_initializer;
 
   public:
     inline variable_decl_node(int lineno, int qualifier, std::shared_ptr<cdk::basic_type> varType, 
-      const std::string &identifier, cdk::expression_node *initializer) :
-        cdk::typed_node(lineno), _qualifier(qualifier), _identifier(identifier), _initializer(initializer) {
+      bool isAuto, const std::string &identifier, cdk::expression_node *initializer) :
+        cdk::typed_node(lineno), _qualifier(qualifier), _isAuto(isAuto), _identifier(identifier), _initializer(initializer) {
           type(varType);
+    }
+
+    inline variable_decl_node(int lineno, int qualifier, bool isAuto,
+      const std::string &identifier, cdk::expression_node *initializer) :
+        cdk::typed_node(lineno), _qualifier(qualifier), _isAuto(isAuto), _identifier(identifier), _initializer(initializer) {
     }
 
   public:
@@ -29,6 +35,10 @@ namespace mml {
 
     inline std::string& identifier() {
       return _identifier;
+    }
+
+    inline bool isAuto() {
+      return _isAuto;
     }
 
     inline cdk::expression_node* initializer() {
