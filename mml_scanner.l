@@ -3,46 +3,117 @@
 %{ 
 // make relevant includes before including the parser's tab file
 #include <string>
+#include <cstring>
+#include <vector>
+#include <sstream>
 #include <cdk/ast/sequence_node.h>
 #include <cdk/ast/expression_node.h>
 #include <cdk/ast/lvalue_node.h>
 #include "mml_parser.tab.h"
 
+static std::ostringstream strlit;
+
 // don't change this
 #define yyerror LexerError
 %}
-%x X_STRING
+
+SPACE     ([ \t\r]|\n)
+INT       [[:digit:]]+   
+
+LETTER  [A-Za-z_]
+IDENTIFIER   {LETTER}({LETTER}|[[:digit:]])*
+
+%x X_COMMENT
+%x X_STRING  X_BACKSLASH   X_CHAR    X_CHAR_END
+%x X_OCTAL   X_HEXADECIMAL X_HEX_INT X_BIN_INT
 %%
   yydebug=1; set_debug(1);
 
 "--".*                 ; /* ignore comments */
 
+"int"                  return tTYPE_INT;
+"double"               return tTYPE_DOUBLE;
+"string"               return tTYPE_STRING;
+"void"                 return tTYPE_VOID;
+
+"foreign"              return tFOREIGN;
+"forward"              return tFORWARD;
+"public"               return tPUBLIC;
+"auto"                 return tAUTO;
+
+"if"                   return tIF; 
+"elif"                 return tELIF;
+"else"                 return tELSE;
+"while"                return tWHILE; 
+"stop"                 return tSTOP;
+"next"                 return tNEXT;
+"return"               return tRETURN; 
+
+"input"                return tINPUT;
+"null"                 return tNULL;
+"sizeof"               return tSIZEOF;
+
+"begin"                return tBEGIN; 
+"end"                  return tEND; 
+
+
 ">="                   return tGE; 
 "<="                   return tLE; 
 "=="                   return tEQ; 
 "!="                   return tNE; 
+"&&"                   return tAND;
+"||"                   return tOR;
 
-"while"                return tWHILE; 
-"if"                   return tIF; 
-"else"                 return tELSE; 
-"print"                return tPRINT; 
-"read"                 return tREAD; 
-"begin"                return tBEGIN; 
-"end"                  return tEND; 
+[-%\]{}()<>!*/~+&|[;?,=.]               return *yytext;
 
 [A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
 
-\'                     yy_push_state(X_STRING); yylval.s = new std::string("");
-<X_STRING>\'           yy_pop_state(); return tSTRING;
-<X_STRING>\\\'         *yylval.s += yytext + 1;
-<X_STRING>.            *yylval.s += yytext;
-<X_STRING>\n           yyerror("newline in string");
 
-[0-9]+                 yylval.i = strtol(yytext, nullptr, 10); return tINTEGER;
 
-[-()<>=+*/%;{}.]       return *yytext;
+"0x"                   yy_push_state(X_HEX_INT);
 
-[ \t\n]+               ; /* ignore whitespace */
+<X_HEX_INT>[[:xdigit:]]+      { yylval.i = strtoul(yytext, NULL, 16); yy_pop_state(); return tINTEGER; }
+<X_HEX_INT>.|\n               std::cerr << "WARNING: line " << lineno() << ": bad hexadecimal data!" << std::endl; exit(1);
+
+{INT}                  yylval.i = strtoul(yytext, NULL, 10); return tINTEGER;
+
+
+
+([0-9]*\.[0-9]+|[0-9]+\.[0-9]*)([eE][-+]?[0-9]+)? { yylval.d = strtod(yytext, NULL); return tREAL; }
+
+
+
+"//".*$                /* match the whole line (it is ignored) */
+
+"/*"                   yy_push_state(X_COMMENT);
+<X_COMMENT>"*/"        yy_pop_state();
+<X_COMMENT>.|"\n"      ;  /* ignore inside comments */
+
+
+
+"\""                           yy_push_state(X_STRING);
+<X_STRING>\\                   yy_push_state(X_BACKSLASH);
+<X_STRING>"\""                 {
+                                 yylval.s = new std::string(strlit.str());
+                                 strlit.str("");
+                                 yy_pop_state();
+                                 return tSTRING;
+                               }
+<X_STRING>.                    strlit << *yytext;
+
+<X_BACKSLASH>n                 strlit << '\n'; yy_pop_state();
+<X_BACKSLASH>r                 strlit << '\r'; yy_pop_state();
+<X_BACKSLASH>t                 strlit << '\t'; yy_pop_state();
+<X_BACKSLASH>\\                strlit << '\\'; yy_pop_state();
+
+<X_BACKSLASH>[[:xdigit:]]{1,2} {
+                                 strlit << (char)(unsigned char)strtoul(yytext, NULL, 16);
+                                 yy_pop_state();
+                               }
+<X_BACKSLASH>.                 strlit << *yytext; yy_pop_state();
+
+
+[ \r\t\n]+             ; /* ignore whitespace */
 
 .                      yyerror("Unknown character");
 

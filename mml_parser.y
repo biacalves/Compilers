@@ -25,6 +25,7 @@
   //-- don't change *any* of these --- END!
 
   int                   i;	/* integer value */
+  double                d;
   std::string          *s;	/* symbol name or string literal */
   cdk::basic_node      *node;	/* node pointer */
   cdk::sequence_node   *sequence;
@@ -32,18 +33,34 @@
   cdk::lvalue_node     *lvalue;
 };
 
+%token tTYPE_INT tTYPE_DOUBLE tTYPE_STRING tTYPE_VOID
+%token tFOREIGN tFORWARD tPUBLIC tAUTO
+%token tIF tELIF tELSE tWHILE tSTOP tNEXT tRETURN
+%token tINPUT tNULL tSIZEOF
+%token tBEGIN tEND
+%token tGE tLE tEQ tNE tAND tOR
+
 %token <i> tINTEGER
+%token <r> tREAL
+%token <d> tDOUBLE
 %token <s> tIDENTIFIER tSTRING
-%token tWHILE tIF tPRINT tREAD tBEGIN tEND
 
 %nonassoc tIFX
-%nonassoc tELSE
-
-%right '='
-%left tGE tLE tEQ tNE '>' '<'
-%left '+' '-'
-%left '*' '/' '%'
+%nonassoc tELIF tELSE
+%nonassoc '(' ')' '[' ']'
 %nonassoc tUNARY
+
+%left '*' '/' '%'
+%left '+' '-'
+%left '<' '>' tLE tGE
+%left tEQ tNE  
+%nonassoc '~'
+%left tAND
+%left tOR
+%right '='
+
+
+
 
 %type <node> stmt program
 %type <sequence> list
@@ -54,6 +71,8 @@
 //-- The rules below will be included in yyparse, the main parsing function.
 %}
 %%
+
+
 
 program	: tBEGIN list tEND { compiler->ast(new mml::program_node(LINE, $2, $2)); }
 	      ;
