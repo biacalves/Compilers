@@ -56,13 +56,16 @@ IDENTIFIER   {LETTER}({LETTER}|[[:digit:]])*
 "begin"                return tBEGIN; 
 "end"                  return tEND; 
 
-
 ">="                   return tGE; 
 "<="                   return tLE; 
 "=="                   return tEQ; 
 "!="                   return tNE; 
 "&&"                   return tAND;
 "||"                   return tOR;
+
+"!"                    return tPRINT;
+"!!"				   			   return tPRINTLN;
+
 
 [-%\]{}()<>!*/~+&|[;?,=.]               return *yytext;
 

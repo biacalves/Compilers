@@ -26,11 +26,12 @@
 
   int                   i;	/* integer value */
   double                d;
-  std::string          *s;	/* symbol name or string literal */
-  cdk::basic_node      *node;	/* node pointer */
-  cdk::sequence_node   *sequence;
-  cdk::expression_node *expression; /* expression nodes */
-  cdk::lvalue_node     *lvalue;
+  std::string           *s;	/* symbol name or string literal */
+  cdk::basic_node       *node;	/* node pointer */
+  cdk::sequence_node    *sequence;
+  cdk::expression_node  *expression; /* expression nodes */
+  cdk::lvalue_node      *lvalue;
+  mml::block_node       *block;
 };
 
 %token tTYPE_INT tTYPE_DOUBLE tTYPE_STRING tTYPE_VOID
@@ -39,6 +40,7 @@
 %token tINPUT tNULL tSIZEOF
 %token tBEGIN tEND
 %token tGE tLE tEQ tNE tAND tOR
+%token tPRINT tPRINTLN
 
 %token <i> tINTEGER
 %token <r> tREAL
@@ -61,11 +63,12 @@
 
 
 
-%type <node> stmt program declaration 
-%type <sequence> list declarations 
-%type <expression> expr
+%type <node> program declaration instruction ifs
+%type <sequence> declarations instructions exprs
+%type <expression> expr 
 %type <lvalue> lval
 %type <type> type functype
+%type <block> block
 
 %{
 //-- The rules below will be included in yyparse, the main parsing function.
@@ -111,23 +114,43 @@ functype       : type "<" type ">"                          { $$ = $1;}
                | type "<" ">"                               { $$ = $1;}
                ;
 
+program	     : tBEGIN declarations instructions tEND      { compiler->ast(new mml::program_node(LINE, $2, $3)); }
+               | tBEGIN declarations tEND                   { compiler->ast(new mml::program_node(LINE, $2, new cdk::sequence_node(LINE))); }
+               | tBEGIN instructions tEND                   { compiler->ast(new mml::program_node(LINE, new cdk::sequence_node(LINE), $2)); }
+               | tBEGIN tEND                                { compiler->ast(new mml::program_node(LINE, new cdk::sequence_node(LINE), new cdk::sequence_node(LINE))); }
+	          ;
+
+instructions   : instruction                                { $$ = new cdk::sequence_node(LINE, $1);}
+               | instructions instruction                   { $$ = new cdk::sequence_node(LINE, $2, $1);}
+               ;
+
+instruction    : expr ";"                                   { $$ = new mml::evaluation_node(LINE, $1);}
+               | exprs tPRINT                               { $$ = new mml::print_node(LINE, $1, false);}
+               | exprs tPRINTLN                             { $$ = new mml::print_node(LINE, $1, true);}
+               | tSTOP "[" tINTEGER "]" ";"                 { $$ = new mml::stop_node(LINE, $3);}
+               | tNEXT "[" tINTEGER "]" ";"                 { $$ = new mml::next_node(LINE, $3);}
+               | tRETURN "[" expr "]" ";"                   { $$ = new mml::return_node(LINE, $3);}
+               | tIF ifs                                    { $$ = $2;}
+               | tWHILE "(" expr ")" instruction            { $$ = new mml::while_node(LINE, $3, $5);}
+               | block                                      { $$ = $1;}
+               ;
+
+exprs          : expr                                       { $$ = new cdk::sequence_node(LINE, $1);}
+               | exprs expr                                 { $$ = new cdk::sequence_node(LINE, $2, $1);}
 
 
-program	: tBEGIN list tEND { compiler->ast(new mml::program_node(LINE, $2, $2)); }
-	      ;
+ifs            : "(" expr ")" instruction                   { $$ = new mml::if_node(LINE, $2, $4);}
+               | "(" expr ")" instruction tELSE instruction { $$ = new mml::if_else_node(LINE, $2, $4, $6);}
+               | "(" expr ")" instruction tELIF ifs         { $$ = new mml::if_else_node(LINE, $2, $4, $6);}
+               ;
 
-list : stmt	     { $$ = new cdk::sequence_node(LINE, $1); }
-	   | list stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
-	   ;
+block          : "{" declarations instructions "}"          { $$ = new mml::block_node(LINE, $2, $3);}
+               | "{" declarations "}"                       { $$ = new mml::block_node(LINE, $2, new cdk::sequence_node(LINE));}
+               | "{" instructions "}"                       { $$ = new mml::block_node(LINE, new cdk::sequence_node(LINE), $2);}
+               | "{" "}"                                    { $$ = new mml::block_node(LINE, new cdk::sequence_node(LINE), new cdk::sequence_node(LINE));}
+               ;
 
-stmt : expr ';'                         { $$ = new mml::evaluation_node(LINE, $1); }
-//-- 	   | tPRINT exprs ';'                  { $$ = new mml::print_node(LINE, $2, false); }
-//--     | tREAD lval ';'                   { $$ = new mml::read_node(LINE, $2); }
-     | tWHILE '(' expr ')' stmt         { $$ = new mml::while_node(LINE, $3, $5); }
-     | tIF '(' expr ')' stmt %prec tIFX { $$ = new mml::if_node(LINE, $3, $5); }
-     | tIF '(' expr ')' stmt tELSE stmt { $$ = new mml::if_else_node(LINE, $3, $5, $7); }
-     | '{' list '}'                     { $$ = $2; }
-     ;
+
 
 expr : tINTEGER                                   { $$ = new cdk::integer_node(LINE, $1); }
      | tDOUBLE                                    { $$ = new cdk::double_node(LINE, $1); }
