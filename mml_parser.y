@@ -115,10 +115,10 @@ functype       : type '<' type '>'                          { $$ = $1;}
                | type '<' '>'                               { $$ = $1;}
                ;
 
-program	     : tBEGIN declarations instrs tEND            { compiler->ast(new mml::program_node(LINE, $2, $3)); }
-               | tBEGIN declarations tEND                   { compiler->ast(new mml::program_node(LINE, $2, new cdk::sequence_node(LINE))); }
-               | tBEGIN instrs tEND                         { compiler->ast(new mml::program_node(LINE, new cdk::sequence_node(LINE), $2)); }
-               | tBEGIN tEND                                { compiler->ast(new mml::program_node(LINE, new cdk::sequence_node(LINE), new cdk::sequence_node(LINE))); }
+program	     : tBEGIN declarations instrs tEND            { $$ = (new mml::program_node(LINE, $2, $3)); }
+               | tBEGIN declarations tEND                   { $$ = (new mml::program_node(LINE, $2, new cdk::sequence_node(LINE))); }
+               | tBEGIN instrs tEND                         { $$ = (new mml::program_node(LINE, new cdk::sequence_node(LINE), $2)); }
+               | tBEGIN tEND                                { $$ = (new mml::program_node(LINE, new cdk::sequence_node(LINE), new cdk::sequence_node(LINE))); }
 	          ;
 
 instrs         : instr                                      { $$ = new cdk::sequence_node(LINE, $1);}
