@@ -13,7 +13,7 @@ namespace mml {
     cdk::expression_node *_retval;
 
   public:
-    inline return_node(int lineno, cdk::expression_node *retval = nullptr) :
+    inline return_node(int lineno, cdk::expression_node *retval) :
         cdk::basic_node(lineno), _retval(retval) {
     }
 

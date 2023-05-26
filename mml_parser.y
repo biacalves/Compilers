@@ -48,9 +48,7 @@
 %token <s> tIDENTIFIER tSTRING
 
 %nonassoc tELIF tELSE
-%nonassoc  ')' ']'
-
-
+%nonassoc   '(' ')' '[' ']'
 
 %right '='
 %left tOR
@@ -61,7 +59,7 @@
 %left '+' '-'
 %left '*' '/' '%'
 %nonassoc tUNARY
-%nonassoc '[' '('
+
 
 %type <node> program declaration instr 
 %type <sequence> declarations instrs exprs
@@ -128,9 +126,12 @@ instrs         : instr                                      { $$ = new cdk::sequ
 instr          : expr ';'                                   { $$ = new mml::evaluation_node(LINE, $1);}
                | exprs tPRINT                               { $$ = new mml::print_node(LINE, $1, false);}
                | exprs tPRINTLN                             { $$ = new mml::print_node(LINE, $1, true);}
-               | tSTOP '[' tINTEGER ']' ';'                 { $$ = new mml::stop_node(LINE, $3);}
-               | tNEXT '[' tINTEGER ']' ';'                 { $$ = new mml::next_node(LINE, $3);}
-               | tRETURN '[' expr ']' ';'                   { $$ = new mml::return_node(LINE, $3);}
+               | tSTOP tINTEGER ';'                         { $$ = new mml::stop_node(LINE, $2);}
+               | tSTOP ';'                                  { $$ = new mml::stop_node(LINE, 1);}
+               | tNEXT tINTEGER ';'                         { $$ = new mml::next_node(LINE, $2);}
+               | tNEXT ';'                                  { $$ = new mml::next_node(LINE, 1);}
+               | tRETURN expr ';'                           { $$ = new mml::return_node(LINE, $2);}
+               | tRETURN ';'                                { $$ = new mml::return_node(LINE, nullptr);}
                | tIF '(' expr ')' instr %prec tELIF         { $$ = new mml::if_node(LINE, $3, $5); }
 //--               | tIF '(' expr ')' instr tELSE instr         { $$ = new mml::if_else_node(LINE, $3, $5, $7); }
                | tWHILE '(' expr ')' instr                  { $$ = new mml::while_node(LINE, $3, $5);}
@@ -139,6 +140,7 @@ instr          : expr ';'                                   { $$ = new mml::eval
 
 exprs          : expr                                       { $$ = new cdk::sequence_node(LINE, $1);}
                | exprs expr                                 { $$ = new cdk::sequence_node(LINE, $2, $1);}
+               ;
 
 block          : '{' declarations instrs '}'                { $$ = new mml::block_node(LINE, $2, $3);}
                | '{' declarations '}'                       { $$ = new mml::block_node(LINE, $2, new cdk::sequence_node(LINE));}
@@ -148,7 +150,7 @@ block          : '{' declarations instrs '}'                { $$ = new mml::bloc
 
 //--function       : '(' ')' '-' '>' type block                 { $$ = new mml::func_definition_node(LINE, new cdk::sequence_node(LINE), $5, $6);}
 //--               | '(' declarations ')' '-' '>' type block    { $$ = new mml::func_definition_node(LINE, $2, $6, $7);}
-               ;
+ //--              ;
 
 funccall       : tIDENTIFIER '('  ')'                       { $$ = new mml::func_call_node(LINE, *$1, new cdk::sequence_node(LINE));}
                | tIDENTIFIER '(' exprs ')'                  { $$ = new mml::func_call_node(LINE, *$1, $3);}

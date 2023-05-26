@@ -12,7 +12,7 @@ namespace mml {
     int _level;
 
   public:
-    inline stop_node(int lineno, int level = 1) :
+    inline stop_node(int lineno, int level) :
         cdk::basic_node(lineno), _level(level) {
     }
 
