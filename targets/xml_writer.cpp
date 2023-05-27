@@ -1,4 +1,7 @@
 #include <string>
+#include <iostream>
+#include <memory>
+#include <cdk/types/types.h>
 #include "targets/xml_writer.h"
 #include "targets/type_checker.h"
 #include "targets/symbol.h"
@@ -8,7 +11,6 @@ std::string bool_to_string(bool is_newline) {
   if (is_newline) return "true";
   else return "false";
 }
-
 
 //---------------------------------------------------------------------------
 
@@ -276,7 +278,27 @@ void mml::xml_writer::do_address_node(mml::address_node * const node, int lvl) {
 }
 
 void mml::xml_writer::do_variable_decl_node(mml::variable_decl_node * const node, int lvl) {
-    
+  ASSERT_SAFE_EXPRESSIONS;
+
+  if(node->type() == nullptr){
+    os() << std::string(lvl, ' ') << "<" << node->label() << " public='" << node->isPublic() 
+    << "' forward='" << node->isForward() << "' foreign='" << node->isForeign() << "' auto='" << node->isAuto() 
+    << "' identifier='" << node->identifier() << "'>" << std::endl;
+  }
+
+  else {
+  os() << std::string(lvl, ' ') << "<" << node->label() << " public='" << node->isPublic() 
+    << "' forward='" << node->isForward() << "' foreign='" << node->isForeign() << "' auto='" << node->isAuto() 
+    << "' type='" << cdk::to_string(node->type()) << "' identifier='" << node->identifier() << "'>" << std::endl;
+  }
+  
+  openTag("initializer", lvl + 2);
+  if(node->initializer() != nullptr){
+    node->initializer()->accept(this, lvl + 4);
+  }
+  closeTag("initializer", lvl + 2);
+  
+  closeTag(node, lvl);
 }
 
 void mml::xml_writer::do_func_definition_node(mml::func_definition_node * const node, int lvl) {
