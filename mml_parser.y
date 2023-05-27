@@ -61,7 +61,7 @@
 
 
 %type <node> program declaration instr function variable fvar
-%type <sequence> declarations instrs exprs fvars
+%type <sequence> declarations instrs exprs fvars args
 %type <expression> expr funccall 
 %type <lvalue> lval
 %type <type> type functype
@@ -139,11 +139,11 @@ functype       : type '<' type '>'                          { $$ = $1;}
                | type '<' '>'                               { $$ = $1;}
                ;
 
-program	     : tBEGIN declarations instrs tEND            { $$ = (new mml::program_node(LINE, $2, $3)); }
+program	       : tBEGIN declarations instrs tEND            { $$ = (new mml::program_node(LINE, $2, $3)); }
                | tBEGIN declarations tEND                   { $$ = (new mml::program_node(LINE, $2, new cdk::sequence_node(LINE))); }
                | tBEGIN instrs tEND                         { $$ = (new mml::program_node(LINE, new cdk::sequence_node(LINE), $2)); }
                | tBEGIN tEND                                { $$ = (new mml::program_node(LINE, new cdk::sequence_node(LINE), new cdk::sequence_node(LINE))); }
-	          ;
+	             ;
 
 instrs         : instr                                      { $$ = new cdk::sequence_node(LINE, $1);}
                | instrs instr                               { $$ = new cdk::sequence_node(LINE, $2, $1);}
@@ -175,8 +175,12 @@ block          : '{' declarations instrs '}'                { $$ = new mml::bloc
                ;
 
 funccall       : tIDENTIFIER '('  ')'                       { $$ = new mml::func_call_node(LINE, *$1, new cdk::sequence_node(LINE));}
-               | tIDENTIFIER '(' exprs ')'                  { $$ = new mml::func_call_node(LINE, *$1, $3);}
+               | tIDENTIFIER '(' args ')'                   { $$ = new mml::func_call_node(LINE, *$1, $3);}
                ;
+
+args           : expr                                       { $$ = new cdk::sequence_node(LINE, $1);}
+               | exprs ',' expr                             { $$ = new cdk::sequence_node(LINE, $3, $1);}
+               ;  
 
 expr           : tINTEGER                                   { $$ = new cdk::integer_node(LINE, $1); }
                | tDOUBLE                                    { $$ = new cdk::double_node(LINE, $1); }
@@ -209,6 +213,7 @@ expr           : tINTEGER                                   { $$ = new cdk::inte
                ;
 
 lval           : tIDENTIFIER                                { $$ = new cdk::variable_node(LINE, $1); }
+               | expr '[' expr ']'                          { $$ = new mml::index_node(LINE, $1, $3);}
                ;
 
 string         : tSTRING                                    { $$ = $1; }

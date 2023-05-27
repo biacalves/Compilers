@@ -13,10 +13,6 @@ namespace mml {
     cdk::sequence_node *_arguments;
 
   public:
-    inline func_call_node(int lineno, const std::string &identifier) :
-        cdk::expression_node(lineno), _identifier(identifier), _arguments(new cdk::sequence_node(lineno)) {
-    }
-
     inline func_call_node(int lineno, const std::string &identifier, cdk::sequence_node *arguments) :
         cdk::expression_node(lineno), _identifier(identifier), _arguments(arguments) {
     }
