@@ -245,7 +245,22 @@ void mml::xml_writer::do_return_node(mml::return_node * const node, int lvl) {
 }
 
 void mml::xml_writer::do_block_node(mml::block_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+
+  openTag("declarations", lvl);
+  if (node->declarations()) {
+    node->declarations()->accept(this, lvl + 4);
+  }
+  closeTag("declarations", lvl);
+
+  openTag("instructions", lvl);
+  if (node->instructions()) {
+    node->instructions()->accept(this, lvl + 4);
+  }
+  closeTag("instructions", lvl);
+
+  closeTag(node, lvl);
 }
 
 void mml::xml_writer::do_input_node(mml::input_node * const node, int lvl) {
@@ -302,7 +317,34 @@ void mml::xml_writer::do_variable_decl_node(mml::variable_decl_node * const node
 }
 
 void mml::xml_writer::do_func_definition_node(mml::func_definition_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+
+  if(node->type() == nullptr){
+    os() << std::string(lvl, ' ') << "<" << node->label() << " public='" << node->isPublic() 
+    << "' forward='" << node->isForward() << "' foreign='" << node->isForeign() << "' auto='" << node->isAuto() 
+    << "' identifier='" << node->identifier() << "' return='" << cdk::to_string(node->type()) << "'>" << std::endl;
+  }
+
+  else {
+  os() << std::string(lvl, ' ') << "<" << node->label() << " public='" << node->isPublic() 
+    << "' forward='" << node->isForward() << "' foreign='" << node->isForeign() << "' auto='" << node->isAuto() 
+    << "' type='" << cdk::to_string(node->type()) << "' identifier='" << node->identifier() 
+    << "' return='" << cdk::to_string(node->type()) << "'>" << std::endl;
+  }
+
+  openTag("variables", lvl + 2);
+  if(node->variables() != nullptr) { 
+    node->variables()->accept(this, lvl + 4); 
+  }
+  closeTag("variables", lvl + 2);
+
+  openTag("block", lvl + 2);
+  if(node->block() != nullptr) { 
+    node->block()->accept(this, lvl + 4); 
+  }
+  closeTag("block", lvl + 2);
+  
+  closeTag(node, lvl);
 }
 
 void mml::xml_writer::do_func_call_node(mml::func_call_node * const node, int lvl) {
