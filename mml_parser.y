@@ -46,8 +46,9 @@
 %token <d> tDOUBLE
 %token <s> tIDENTIFIER tSTRING
 
+%nonassoc ')' 
 %nonassoc tELIF tELSE
-%nonassoc   '(' ')' '[' ']'
+
 
 %right '='
 %left tOR
@@ -58,9 +59,10 @@
 %left '+' '-'
 %left '*' '/' '%'
 %nonassoc tUNARY
+%nonassoc '[' 
 
 
-%type <node> program declaration instr function variable fvar
+%type <node> program declaration instr function variable fvar ifs
 %type <sequence> declarations instrs exprs fvars args
 %type <expression> expr funccall 
 %type <lvalue> lval
@@ -105,9 +107,13 @@ variable       : tFOREIGN type tIDENTIFIER               { $$ = new mml::variabl
                | tIDENTIFIER '=' expr                    { $$ = new mml::variable_decl_node(LINE, false, false, false, false, *$1, $3);}
                ;
 
-function       : tFOREIGN type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'      { $$ = new mml::func_definition_node(LINE, false, false, true, false, $2, *$3, $6, $10, $11);}
+function       : tFOREIGN type tIDENTIFIER                                               { $$ = new mml::func_definition_node(LINE, false, false, true, false, $2, *$3, new cdk::sequence_node(LINE), nullptr);}
+               | tFORWARD type tIDENTIFIER                                               { $$ = new mml::func_definition_node(LINE, false, true, false, false, $2, *$3, new cdk::sequence_node(LINE), nullptr);}
+               | tPUBLIC type tIDENTIFIER                                                { $$ = new mml::func_definition_node(LINE, true, false, false, false, $2, *$3, new cdk::sequence_node(LINE), nullptr);}
+               | tFOREIGN type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'      { $$ = new mml::func_definition_node(LINE, false, false, true, false, $2, *$3, $6, $10, $11);}
                | tFORWARD type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'      { $$ = new mml::func_definition_node(LINE, false, true, false, false, $2, *$3, $6, $10, $11);}
                | tPUBLIC type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'       { $$ = new mml::func_definition_node(LINE, true, false, false, false, $2, *$3, $6, $10, $11);}
+               | type tIDENTIFIER                                                        { $$ = new mml::func_definition_node(LINE, false, false, false, false, $1, *$2, new cdk::sequence_node(LINE), nullptr);}
                | type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'               { $$ = new mml::func_definition_node(LINE, false, false, false, false, $1, *$2, $5, $9, $10);}
                | tFOREIGN tAUTO tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'     { $$ = new mml::func_definition_node(LINE, false, false, true, true, *$3, $6, $10, $11);}
                | tFORWARD tAUTO tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'     { $$ = new mml::func_definition_node(LINE, false, true, false, true, *$3, $6, $10, $11);}
@@ -158,11 +164,15 @@ instr          : expr ';'                                   { $$ = new mml::eval
                | tNEXT ';'                                  { $$ = new mml::next_node(LINE, 1);}
                | tRETURN expr ';'                           { $$ = new mml::return_node(LINE, $2);}
                | tRETURN ';'                                { $$ = new mml::return_node(LINE, nullptr);}
-               | tIF '(' expr ')' instr %prec tELIF         { $$ = new mml::if_node(LINE, $3, $5); }
-//--               | tIF '(' expr ')' instr tELSE instr         { $$ = new mml::if_else_node(LINE, $3, $5, $7); }
+               | tIF ifs                                    { $$ = $2; }
                | tWHILE '(' expr ')' instr                  { $$ = new mml::while_node(LINE, $3, $5);}
                | block                                      { $$ = $1;}
                ;
+
+ifs             : '(' expr ')' instr                                 { $$ = new mml::if_node(LINE, $2, $4);}
+                | '(' expr ')' instr tELSE instr                     { $$ = new mml::if_else_node(LINE, $2, $4, $6);}
+                | '(' expr ')' instr tELIF ifs                     { $$ = new mml::if_else_node(LINE, $2, $4, $6);}
+                ;
 
 exprs          : expr                                       { $$ = new cdk::sequence_node(LINE, $1);}
                | exprs expr                                 { $$ = new cdk::sequence_node(LINE, $2, $1);}
@@ -190,17 +200,17 @@ expr           : tINTEGER                                   { $$ = new cdk::inte
                | '+' expr %prec tUNARY                      { $$ = $2; }
                | '-' expr %prec tUNARY                      { $$ = new cdk::neg_node(LINE, $2); }
                | '~' expr                                   { $$ = new cdk::not_node(LINE, $2); }
-               | expr '+' expr	                         { $$ = new cdk::add_node(LINE, $1, $3); }
-               | expr '-' expr	                         { $$ = new cdk::sub_node(LINE, $1, $3); }
-               | expr '*' expr	                         { $$ = new cdk::mul_node(LINE, $1, $3); }
-               | expr '/' expr	                         { $$ = new cdk::div_node(LINE, $1, $3); }
-               | expr '%' expr	                         { $$ = new cdk::mod_node(LINE, $1, $3); }
-               | expr '<' expr	                         { $$ = new cdk::lt_node(LINE, $1, $3); }
-               | expr '>' expr	                         { $$ = new cdk::gt_node(LINE, $1, $3); }
-               | expr tGE expr	                         { $$ = new cdk::ge_node(LINE, $1, $3); }
+               | expr '+' expr	                            { $$ = new cdk::add_node(LINE, $1, $3); }
+               | expr '-' expr	                            { $$ = new cdk::sub_node(LINE, $1, $3); }
+               | expr '*' expr	                            { $$ = new cdk::mul_node(LINE, $1, $3); }
+               | expr '/' expr	                            { $$ = new cdk::div_node(LINE, $1, $3); }
+               | expr '%' expr	                            { $$ = new cdk::mod_node(LINE, $1, $3); }
+               | expr '<' expr	                            { $$ = new cdk::lt_node(LINE, $1, $3); }
+               | expr '>' expr	                            { $$ = new cdk::gt_node(LINE, $1, $3); }
+               | expr tGE expr	                            { $$ = new cdk::ge_node(LINE, $1, $3); }
                | expr tLE expr                              { $$ = new cdk::le_node(LINE, $1, $3); }
-               | expr tNE expr	                         { $$ = new cdk::ne_node(LINE, $1, $3); }
-               | expr tEQ expr	                         { $$ = new cdk::eq_node(LINE, $1, $3); }
+               | expr tNE expr	                            { $$ = new cdk::ne_node(LINE, $1, $3); }
+               | expr tEQ expr	                            { $$ = new cdk::eq_node(LINE, $1, $3); }
                | expr tAND expr                             { $$ = new cdk::and_node(LINE, $1, $3); }
                | expr tOR expr                              { $$ = new cdk::or_node (LINE, $1, $3); }
                | tINPUT                                     { $$ = new mml::input_node(LINE); }
