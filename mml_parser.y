@@ -61,7 +61,6 @@
 %nonassoc tUNARY
 %nonassoc '[' 
 
-
 %type <node> program declaration instr function variable fvar ifs
 %type <sequence> declarations instrs exprs fvars args
 %type <expression> expr funccall 
@@ -107,13 +106,9 @@ variable       : tFOREIGN type tIDENTIFIER               { $$ = new mml::variabl
                | tIDENTIFIER '=' expr                    { $$ = new mml::variable_decl_node(LINE, false, false, false, false, *$1, $3);}
                ;
 
-function       : tFOREIGN type tIDENTIFIER                                               { $$ = new mml::func_definition_node(LINE, false, false, true, false, $2, *$3, new cdk::sequence_node(LINE), nullptr);}
-               | tFORWARD type tIDENTIFIER                                               { $$ = new mml::func_definition_node(LINE, false, true, false, false, $2, *$3, new cdk::sequence_node(LINE), nullptr);}
-               | tPUBLIC type tIDENTIFIER                                                { $$ = new mml::func_definition_node(LINE, true, false, false, false, $2, *$3, new cdk::sequence_node(LINE), nullptr);}
-               | tFOREIGN type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'      { $$ = new mml::func_definition_node(LINE, false, false, true, false, $2, *$3, $6, $10, $11);}
+function       : tFOREIGN type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'      { $$ = new mml::func_definition_node(LINE, false, false, true, false, $2, *$3, $6, $10, $11);}
                | tFORWARD type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'      { $$ = new mml::func_definition_node(LINE, false, true, false, false, $2, *$3, $6, $10, $11);}
                | tPUBLIC type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'       { $$ = new mml::func_definition_node(LINE, true, false, false, false, $2, *$3, $6, $10, $11);}
-               | type tIDENTIFIER                                                        { $$ = new mml::func_definition_node(LINE, false, false, false, false, $1, *$2, new cdk::sequence_node(LINE), nullptr);}
                | type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'               { $$ = new mml::func_definition_node(LINE, false, false, false, false, $1, *$2, $5, $9, $10);}
                | tFOREIGN tAUTO tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'     { $$ = new mml::func_definition_node(LINE, false, false, true, true, *$3, $6, $10, $11);}
                | tFORWARD tAUTO tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'     { $$ = new mml::func_definition_node(LINE, false, true, false, true, *$3, $6, $10, $11);}
@@ -141,7 +136,8 @@ type           : tTYPE_INT                                  { $$ = cdk::primitiv
                | functype                                   { $$ = $1;}
                ;
 
-functype       : type '<' type '>'                          { $$ = $1;}
+functype       : type '<' type '>'                          { $$ = $3;}
+               | type '<' functype '>'                      { $$ = $3;}
                | type '<' '>'                               { $$ = $1;}
                ;
 
@@ -169,10 +165,10 @@ instr          : expr ';'                                   { $$ = new mml::eval
                | block                                      { $$ = $1;}
                ;
 
-ifs             : '(' expr ')' instr                                 { $$ = new mml::if_node(LINE, $2, $4);}
-                | '(' expr ')' instr tELSE instr                     { $$ = new mml::if_else_node(LINE, $2, $4, $6);}
-                | '(' expr ')' instr tELIF ifs                     { $$ = new mml::if_else_node(LINE, $2, $4, $6);}
-                ;
+ifs            : '(' expr ')' instr                         { $$ = new mml::if_node(LINE, $2, $4);}
+               | '(' expr ')' instr tELSE instr             { $$ = new mml::if_else_node(LINE, $2, $4, $6);}
+               | '(' expr ')' instr tELIF ifs               { $$ = new mml::if_else_node(LINE, $2, $4, $6);}
+               ;
 
 exprs          : expr                                       { $$ = new cdk::sequence_node(LINE, $1);}
                | exprs expr                                 { $$ = new cdk::sequence_node(LINE, $2, $1);}
@@ -196,7 +192,7 @@ expr           : tINTEGER                                   { $$ = new cdk::inte
                | tDOUBLE                                    { $$ = new cdk::double_node(LINE, $1); }
                | tNULL                                      { $$ = new mml::null_node(LINE); }
                | string                                     { $$ = new cdk::string_node(LINE, $1); }
-               | funccall                                   { $$ = $1;}
+               | funccall                                   { $$ = $1; }
                | '+' expr %prec tUNARY                      { $$ = $2; }
                | '-' expr %prec tUNARY                      { $$ = new cdk::neg_node(LINE, $2); }
                | '~' expr                                   { $$ = new cdk::not_node(LINE, $2); }

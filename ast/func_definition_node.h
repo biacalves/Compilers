@@ -38,13 +38,6 @@ namespace mml {
         _isAuto(isAuto), _identifier(identifier), _variables(variables), _block(block) {
           type(returnValue);
     }
-
-    inline func_definition_node(int lineno, bool isPublic, bool isForward, bool isForeign, bool isAuto,
-        std::shared_ptr<cdk::basic_type> funcType, const std::string &identifier, cdk::sequence_node *variables, block_node *block) :
-        cdk::typed_node(lineno), _isPublic(isPublic), _isForward(isForward), _isForeign(isForeign), 
-        _isAuto(isAuto), _identifier(identifier), _variables(variables), _block(block) {
-          type(funcType);
-    }
     
   public:
     inline bool isPublic() {
