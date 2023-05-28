@@ -67,7 +67,7 @@ IDENTIFIER   {LETTER}({LETTER}|[[:digit:]])*
 "!!"				   			   return tPRINTLN;
 
 
-[-%\]{}()<>!*/~+&|[;?,=.]               return *yytext;
+[-%\]{}()<>!*/~+&|[;?,=.@]               return *yytext;
 
 [A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
 
@@ -109,15 +109,14 @@ IDENTIFIER   {LETTER}({LETTER}|[[:digit:]])*
 <X_BACKSLASH>t                 strlit << '\t'; yy_pop_state();
 <X_BACKSLASH>\\                strlit << '\\'; yy_pop_state();
 
-<X_BACKSLASH>[[:xdigit:]]{1,2} {
-                                 strlit << (char)(unsigned char)strtoul(yytext, NULL, 16);
+<X_BACKSLASH>[[:xdigit:]]{1,3} {
+                                 strlit << (char)(unsigned char)strtoul(yytext, NULL, 8);
                                  yy_pop_state();
                                }
 <X_BACKSLASH>.                 strlit << *yytext; yy_pop_state();
 
 
-[ \r\t\n]+             ; /* ignore whitespace */
-
-.                      yyerror("Unknown character");
+[[:space:]]         /* ignore remaining white space inside the program */
+.                      yyerror(yytext);    /* all other chars: error! */
 
 %%

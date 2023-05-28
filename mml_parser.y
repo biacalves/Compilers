@@ -216,6 +216,7 @@ expr           : tINTEGER                                   { $$ = new cdk::inte
                | tINPUT                                     { $$ = new mml::input_node(LINE); }
                | tSIZEOF '(' expr ')'                       { $$ = new mml::sizeof_node(LINE, $3); }
                | '(' expr ')'                               { $$ = $2; }
+               | '@' '(' expr ')'                           { $$ = $3; } 
                | '[' expr ']'                               { $$ = new mml::mem_alloc_node(LINE, $2);}
                | lval '?'                                   { $$ = new mml::address_node(LINE, $1);}
                | lval                                       { $$ = new cdk::rvalue_node(LINE, $1); }  //FIXME
