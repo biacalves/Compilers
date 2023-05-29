@@ -9,15 +9,15 @@ namespace mml {
    * Class for describing next nodes.
    */
   class next_node: public cdk::basic_node {
-    int _level;
+    cdk::expression_node *_level;
 
   public:
-    inline next_node(int lineno, int level) :
+    inline next_node(int lineno, cdk::expression_node *level) :
         cdk::basic_node(lineno), _level(level) {
     }
 
   public:
-    inline int level() const  {
+    inline cdk::expression_node *level() {
       return _level;
     }
 

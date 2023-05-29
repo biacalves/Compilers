@@ -224,17 +224,19 @@ void mml::xml_writer::do_if_else_node(mml::if_else_node * const node, int lvl) {
 
 void mml::xml_writer::do_stop_node(mml::stop_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  os() << std::string(lvl, ' ') << "<" << node->label() << " level='" << node->level() << "'>" << std::endl;
-
+  
+  openTag(node, lvl);
+  if (node->level()) node->level()->accept(this, lvl + 4);
   closeTag(node, lvl);
 }
 
 void mml::xml_writer::do_next_node(mml::next_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
-  os() << std::string(lvl, ' ') << "<" << node->label() << " level='" << node->level() << "'>" << std::endl;
-
+  openTag(node, lvl);
+  if (node->level()) node->level()->accept(this, lvl + 4);
   closeTag(node, lvl);
+
 }
 
 void mml::xml_writer::do_return_node(mml::return_node * const node, int lvl) {
@@ -364,7 +366,6 @@ void mml::xml_writer::do_func_definition_node(mml::func_definition_node * const 
   
   closeTag(node, lvl);
 }
-
 
 void mml::xml_writer::do_func_call_node(mml::func_call_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;

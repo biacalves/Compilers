@@ -49,7 +49,6 @@
 %nonassoc ')' 
 %nonassoc tELIF tELSE
 
-
 %right '='
 %left tOR
 %left tAND
@@ -88,22 +87,22 @@ declaration    : variable ';'                               { $$ = $1;}
                | function                                   { $$ = $1;}
                ;         
 
-variable       : tFOREIGN type tIDENTIFIER               { $$ = new mml::variable_decl_node(LINE, false, false, true, false, $2, *$3, nullptr);}
-               | tFORWARD type tIDENTIFIER               { $$ = new mml::variable_decl_node(LINE, false, true, false, false, $2, *$3, nullptr);}
-               | tPUBLIC type tIDENTIFIER                { $$ = new mml::variable_decl_node(LINE, true, false, false, false, $2, *$3, nullptr);}
-               | tFOREIGN type tIDENTIFIER '=' expr      { $$ = new mml::variable_decl_node(LINE, false, false, true, false, $2, *$3, $5);}
-               | tFORWARD type tIDENTIFIER '=' expr      { $$ = new mml::variable_decl_node(LINE, false, true, false, false, $2, *$3, $5);}
-               | tPUBLIC type tIDENTIFIER '=' expr       { $$ = new mml::variable_decl_node(LINE, true, false, false, false, $2, *$3, $5);}
-               | type tIDENTIFIER                        { $$ = new mml::variable_decl_node(LINE, false, false, false, false, $1, *$2, nullptr);}
-               | type tIDENTIFIER '=' expr               { $$ = new mml::variable_decl_node(LINE, false, false, false, false, $1, *$2, $4);}
-               | tFOREIGN tAUTO tIDENTIFIER '=' expr     { $$ = new mml::variable_decl_node(LINE, false, false, true, true, *$3, $5);}
-               | tFORWARD tAUTO tIDENTIFIER '=' expr     { $$ = new mml::variable_decl_node(LINE, false, true, false, true, *$3, $5);}
-               | tPUBLIC tAUTO tIDENTIFIER '=' expr      { $$ = new mml::variable_decl_node(LINE, true, false, false, true, *$3, $5);}
-               | tAUTO tIDENTIFIER '=' expr              { $$ = new mml::variable_decl_node(LINE, false, false, false, true, *$2, $4);}
-               | tFOREIGN tIDENTIFIER '=' expr           { $$ = new mml::variable_decl_node(LINE, false, false, true, false, *$2, $4);}
-               | tFORWARD tIDENTIFIER '=' expr           { $$ = new mml::variable_decl_node(LINE, false, true, false, false, *$2, $4);}
-               | tPUBLIC tIDENTIFIER '=' expr            { $$ = new mml::variable_decl_node(LINE, true, false, false, false, *$2, $4);}
-               | tIDENTIFIER '=' expr                    { $$ = new mml::variable_decl_node(LINE, false, false, false, false, *$1, $3);}
+variable       : tFOREIGN type tIDENTIFIER                  { $$ = new mml::variable_decl_node(LINE, false, false, true, false, $2, *$3, nullptr);}
+               | tFORWARD type tIDENTIFIER                  { $$ = new mml::variable_decl_node(LINE, false, true, false, false, $2, *$3, nullptr);}
+               | tPUBLIC type tIDENTIFIER                   { $$ = new mml::variable_decl_node(LINE, true, false, false, false, $2, *$3, nullptr);}
+               | tFOREIGN type tIDENTIFIER '=' expr         { $$ = new mml::variable_decl_node(LINE, false, false, true, false, $2, *$3, $5);}
+               | tFORWARD type tIDENTIFIER '=' expr         { $$ = new mml::variable_decl_node(LINE, false, true, false, false, $2, *$3, $5);}
+               | tPUBLIC type tIDENTIFIER '=' expr          { $$ = new mml::variable_decl_node(LINE, true, false, false, false, $2, *$3, $5);}
+               | type tIDENTIFIER                           { $$ = new mml::variable_decl_node(LINE, false, false, false, false, $1, *$2, nullptr);}
+               | type tIDENTIFIER '=' expr                  { $$ = new mml::variable_decl_node(LINE, false, false, false, false, $1, *$2, $4);}
+               | tFOREIGN tAUTO tIDENTIFIER '=' expr        { $$ = new mml::variable_decl_node(LINE, false, false, true, true, *$3, $5);}
+               | tFORWARD tAUTO tIDENTIFIER '=' expr        { $$ = new mml::variable_decl_node(LINE, false, true, false, true, *$3, $5);}
+               | tPUBLIC tAUTO tIDENTIFIER '=' expr         { $$ = new mml::variable_decl_node(LINE, true, false, false, true, *$3, $5);}
+               | tAUTO tIDENTIFIER '=' expr                 { $$ = new mml::variable_decl_node(LINE, false, false, false, true, *$2, $4);}
+               | tFOREIGN tIDENTIFIER '=' expr              { $$ = new mml::variable_decl_node(LINE, false, false, true, false, *$2, $4);}
+               | tFORWARD tIDENTIFIER '=' expr              { $$ = new mml::variable_decl_node(LINE, false, true, false, false, *$2, $4);}
+               | tPUBLIC tIDENTIFIER '=' expr               { $$ = new mml::variable_decl_node(LINE, true, false, false, false, *$2, $4);}
+               | tIDENTIFIER '=' expr                       { $$ = new mml::variable_decl_node(LINE, false, false, false, false, *$1, $3);}
                ;
 
 function       : tFOREIGN type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'      { $$ = new mml::func_definition_node(LINE, false, false, true, false, $2, *$3, $6, $10, $11);}
@@ -136,14 +135,13 @@ type           : tTYPE_INT                                  { $$ = cdk::primitiv
                | type '<' functype '>'                      { $$ = $1;}
                ;
 
-functype       :                                             { $$ = NULL;}
-               | types                                       { $$ = $1;}
+functype       : types                                      { $$ = $1;}                                            
+               |                                            { $$ = NULL;}
                ;
 
 types          : type                                       { $$ = $1;}
                | types ',' type                             { $$ = $1;}
                ;  
-
 
 program	       : tBEGIN declarations instrs tEND            { $$ = (new mml::program_node(LINE, $2, $3)); }
                | tBEGIN declarations tEND                   { $$ = (new mml::program_node(LINE, $2, new cdk::sequence_node(LINE))); }
@@ -158,10 +156,10 @@ instrs         : instr                                      { $$ = new cdk::sequ
 instr          : expr ';'                                   { $$ = new mml::evaluation_node(LINE, $1);}
                | exprs tPRINT                               { $$ = new mml::print_node(LINE, $1, false);}
                | exprs tPRINTLN                             { $$ = new mml::print_node(LINE, $1, true);}
-               | tSTOP tINTEGER ';'                         { $$ = new mml::stop_node(LINE, $2);}
-               | tSTOP ';'                                  { $$ = new mml::stop_node(LINE, 1);}
-               | tNEXT tINTEGER ';'                         { $$ = new mml::next_node(LINE, $2);}
-               | tNEXT ';'                                  { $$ = new mml::next_node(LINE, 1);}
+               | tSTOP expr ';'                         { $$ = new mml::stop_node(LINE, $2);}
+               | tSTOP ';'                                  { $$ = new mml::stop_node(LINE, nullptr);}
+               | tNEXT expr ';'                         { $$ = new mml::next_node(LINE, $2);}
+               | tNEXT ';'                                  { $$ = new mml::next_node(LINE, nullptr);}
                | tRETURN expr ';'                           { $$ = new mml::return_node(LINE, $2);}
                | tRETURN ';'                                { $$ = new mml::return_node(LINE, nullptr);}
                | tIF ifs                                    { $$ = $2; }
@@ -175,7 +173,7 @@ ifs            : '(' expr ')' instr                         { $$ = new mml::if_n
                ;
 
 exprs          : expr                                       { $$ = new cdk::sequence_node(LINE, $1);}
-               | exprs expr                                 { $$ = new cdk::sequence_node(LINE, $2, $1);}
+               | exprs ',' expr                             { $$ = new cdk::sequence_node(LINE, $3, $1);}
                ;
 
 block          : '{' declarations instrs '}'                { $$ = new mml::block_node(LINE, $2, $3);}
@@ -233,4 +231,5 @@ string         : tSTRING                                    { $$ = $1; }
 
 
 %%
+
 
