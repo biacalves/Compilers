@@ -7,11 +7,6 @@
 #include "targets/symbol.h"
 #include ".auto/all_nodes.h"  // automatically generated
 
-std::string bool_to_string(bool is_newline) {
-  if (is_newline) return "true";
-  else return "false";
-}
-
 //---------------------------------------------------------------------------
 
 void mml::xml_writer::do_nil_node(cdk::nil_node * const node, int lvl) {
@@ -162,20 +157,11 @@ void mml::xml_writer::do_evaluation_node(mml::evaluation_node * const node, int 
 void mml::xml_writer::do_print_node(mml::print_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   os() << std::string(lvl, ' ') << "<" << node->label()
-  << " new_line='" << bool_to_string(node->is_newline()) << "'>" << std::endl;
+  << " new_line='" << node->is_newline() << "'>" << std::endl;
 
   node->argument()->accept(this, lvl + 2);
   closeTag(node, lvl);
 }
-
-//---------------------------------------------------------------------------
-
-/*void mml::xml_writer::do_read_node(mml::read_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS;
-  openTag(node, lvl);
-  node->argument()->accept(this, lvl + 2);
-  closeTag(node, lvl);
-}*/
 
 //---------------------------------------------------------------------------
 
@@ -224,7 +210,7 @@ void mml::xml_writer::do_if_else_node(mml::if_else_node * const node, int lvl) {
 
 void mml::xml_writer::do_stop_node(mml::stop_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  
+
   openTag(node, lvl);
   if (node->level()) node->level()->accept(this, lvl + 4);
   closeTag(node, lvl);
@@ -366,6 +352,7 @@ void mml::xml_writer::do_func_definition_node(mml::func_definition_node * const 
   
   closeTag(node, lvl);
 }
+
 
 void mml::xml_writer::do_func_call_node(mml::func_call_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
