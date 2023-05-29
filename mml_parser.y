@@ -65,7 +65,7 @@
 %type <sequence> declarations instrs exprs fvars args
 %type <expression> expr funccall 
 %type <lvalue> lval
-%type <type> type functype
+%type <type> type functype types
 %type <block> block
 %type <s> string
 
@@ -133,13 +133,17 @@ type           : tTYPE_INT                                  { $$ = cdk::primitiv
                | tTYPE_STRING                               { $$ = cdk::primitive_type::create(4, cdk::TYPE_STRING); }
                | tTYPE_VOID                                 { $$ = cdk::primitive_type::create(0, cdk::TYPE_VOID); }
                | '[' type ']'                               { $$ = cdk::reference_type::create(4, $2); }
-               | functype                                   { $$ = $1;}
+               | type '<' functype '>'                      { $$ = $1;}
                ;
 
-functype       : type '<' type '>'                          { $$ = $3;}
-               | type '<' functype '>'                      { $$ = $3;}
-               | type '<' '>'                               { $$ = $1;}
+functype       :                                             { $$ = NULL;}
+               | types                                       { $$ = $1;}
                ;
+
+types          : type                                       { $$ = $1;}
+               | types ',' type                             { $$ = $1;}
+               ;  
+
 
 program	       : tBEGIN declarations instrs tEND            { $$ = (new mml::program_node(LINE, $2, $3)); }
                | tBEGIN declarations tEND                   { $$ = (new mml::program_node(LINE, $2, new cdk::sequence_node(LINE))); }
@@ -229,3 +233,4 @@ string         : tSTRING                                    { $$ = $1; }
 
 
 %%
+
