@@ -212,7 +212,7 @@ void mml::xml_writer::do_stop_node(mml::stop_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
   openTag(node, lvl);
-  if (node->level()) node->level()->accept(this, lvl + 4);
+  if (node->level() != nullptr) node->level()->accept(this, lvl + 4);
   closeTag(node, lvl);
 }
 
@@ -220,7 +220,7 @@ void mml::xml_writer::do_next_node(mml::next_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
   openTag(node, lvl);
-  if (node->level()) node->level()->accept(this, lvl + 4);
+  if (node->level() != nullptr) node->level()->accept(this, lvl + 4);
   closeTag(node, lvl);
 
 }
@@ -228,7 +228,7 @@ void mml::xml_writer::do_next_node(mml::next_node * const node, int lvl) {
 void mml::xml_writer::do_return_node(mml::return_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
-  if (node->retval()) node->retval()->accept(this, lvl + 4);
+  if (node->retval() != nullptr) node->retval()->accept(this, lvl + 4);
   closeTag(node, lvl);
 }
 
@@ -273,13 +273,17 @@ void mml::xml_writer::do_sizeof_node(mml::sizeof_node * const node, int lvl) {
 void mml::xml_writer::do_index_node(mml::index_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
-  
-  openTag("ptr", lvl + 2);
-  node->ptr()->accept(this, lvl + 4);
-  closeTag("ptr", lvl + 2);
 
+  openTag("ptr", lvl + 2);
+  if(node->ptr() != nullptr){
+    node->ptr()->accept(this, lvl + 4);
+  }
+  closeTag("ptr", lvl + 2);
+  
   openTag("index", lvl + 2);
-  node->index()->accept(this, lvl + 4);
+  if(node->index() != nullptr){
+    node->index()->accept(this, lvl + 4);
+  }
   closeTag("index", lvl + 2);
 
   closeTag(node, lvl);

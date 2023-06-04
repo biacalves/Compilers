@@ -2,6 +2,7 @@
 #define __MML_TARGETS_POSTFIX_WRITER_H__
 
 #include "targets/basic_ast_visitor.h"
+#include <set>
 
 #include <sstream>
 #include <cdk/emitters/basic_postfix_emitter.h>
@@ -12,10 +13,14 @@ namespace mml {
   //! Traverse syntax tree and generate the corresponding assembly code.
   //!
   class postfix_writer: public basic_ast_visitor {
+    bool _inFunctionBody;
+    std::set<std::string> _functions_to_declare;
+    std::shared_ptr<mml::symbol> _function; // for keeping track of the current function and its arguments
+
     cdk::symbol_table<mml::symbol> &_symtab;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;
-
+    
   public:
     postfix_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab,
                    cdk::basic_postfix_emitter &pf) :

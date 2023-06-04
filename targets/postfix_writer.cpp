@@ -36,10 +36,16 @@ void mml::postfix_writer::do_sequence_node(cdk::sequence_node * const node, int 
 //---------------------------------------------------------------------------
 
 void mml::postfix_writer::do_integer_node(cdk::integer_node * const node, int lvl) {
-  _pf.INT(node->value()); // push an integer
+  ASSERT_SAFE_EXPRESSIONS;
+  if (_inFunctionBody) { //ALTERAR
+    _pf.INT(node->value()); // integer literal is on the stack: push an integer
+  } else {
+    _pf.SINT(node->value()); // integer literal is on the DATA segment
+  }
 }
 
 void mml::postfix_writer::do_string_node(cdk::string_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
   int lbl1;
 
   /* generate the string */
@@ -48,17 +54,28 @@ void mml::postfix_writer::do_string_node(cdk::string_node * const node, int lvl)
   _pf.LABEL(mklbl(lbl1 = ++_lbl)); // give the string a name
   _pf.SSTRING(node->value()); // output string characters
 
-  /* leave the address on the stack */
-  _pf.TEXT(); // return to the TEXT segment
-  _pf.ADDR(mklbl(lbl1)); // the string to be printed
+  if (_function) {  //ALTERAR
+    // local variable initializer
+    _pf.TEXT(); // return to the TEXT segment
+    _pf.ADDR(mklbl(lbl1));  // the string to be printed
+  } else {
+    // global variable initializer
+    _pf.DATA();
+    _pf.SADDR(mklbl(lbl1));
+  }
 }
 
 //---------------------------------------------------------------------------
 
 void mml::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+
   node->argument()->accept(this, lvl); // determine the value
-  _pf.NEG(); // 2-complement
+
+  if(node->type()->name() == cdk::TYPE_DOUBLE)
+    _pf.DNEG(); // 2-complement
+  else
+    _pf.NEG();
 }
 
 //---------------------------------------------------------------------------
@@ -170,6 +187,8 @@ void mml::postfix_writer::do_program_node(mml::program_node * const node, int lv
   // The ProgramNode (representing the whole program) doubles as a
   // main function node.
 
+  ASSERT_SAFE_EXPRESSIONS;
+
   // generate the main function (RTS mandates that its name be "_main")
   _pf.TEXT();
   _pf.ALIGN();
@@ -177,8 +196,13 @@ void mml::postfix_writer::do_program_node(mml::program_node * const node, int lv
   _pf.LABEL("_main");
   _pf.ENTER(0);  // MML doesn't implement local variables
 
- // node->statements()->accept(this, lvl);
-
+  if (node->declarations() != nullptr) {
+    node->declarations()->accept(this, lvl);
+  }
+  if ( node->instructions() != nullptr) {
+    node->instructions()->accept(this, lvl);
+  }
+  
   // end the main function
   _pf.INT(0);
   _pf.STFVAL32();
@@ -189,6 +213,7 @@ void mml::postfix_writer::do_program_node(mml::program_node * const node, int lv
   _pf.EXTERN("readi");
   _pf.EXTERN("printi");
   _pf.EXTERN("prints");
+  _pf.EXTERN("printd");
   _pf.EXTERN("println");
 }
 
@@ -201,6 +226,8 @@ void mml::postfix_writer::do_evaluation_node(mml::evaluation_node * const node, 
     _pf.TRASH(4); // delete the evaluated value
   } else if (node->argument()->is_typed(cdk::TYPE_STRING)) {
     _pf.TRASH(4); // delete the evaluated value's address
+  } else if (node->argument()->is_typed(cdk::TYPE_DOUBLE)) {
+    _pf.TRASH(8); // delete the evaluated value
   } else {
     std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
     exit(1);
@@ -208,19 +235,34 @@ void mml::postfix_writer::do_evaluation_node(mml::evaluation_node * const node, 
 }
 
 void mml::postfix_writer::do_print_node(mml::print_node * const node, int lvl) {
-  /*ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   node->argument()->accept(this, lvl); // determine the value to print
-  if (node->argument()->is_typed(cdk::TYPE_INT)) {
-    _pf.CALL("printi");
-    _pf.TRASH(4); // delete the printed value
-  } else if (node->argument()->is_typed(cdk::TYPE_STRING)) {
-    _pf.CALL("prints");
-    _pf.TRASH(4); // delete the printed value's address
-  } else {
-    std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
-    exit(1);
+
+  for(size_t i = 0; i < node->argument()->size(); i++){
+    cdk::expression_node *expression = dynamic_cast<cdk::expression_node *>(node->argument()->node(i));
+  
+    if (expression->is_typed(cdk::TYPE_INT)) {
+      _functions_to_declare.insert("printi");
+      _pf.CALL("printi");
+      _pf.TRASH(4); // delete the printed value
+    } else if (expression->is_typed(cdk::TYPE_STRING)) {
+      _functions_to_declare.insert("prints");
+      _pf.CALL("prints");
+      _pf.TRASH(4); // delete the printed value's address
+    } else if (expression->is_typed(cdk::TYPE_DOUBLE)) {
+      _functions_to_declare.insert("printd");
+      _pf.CALL("printd");
+      _pf.TRASH(8); // trash double
+    } else {
+      std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
+      exit(1);
+    }
   }
-  _pf.CALL("println"); // print a newline*/
+
+  if (node->is_newline()) {
+    _functions_to_declare.insert("println");
+    _pf.CALL("println"); // print a newline
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -298,7 +340,22 @@ void mml::postfix_writer::do_null_node(mml::null_node * const node, int lvl) {
 }
 
 void mml::postfix_writer::do_sizeof_node(mml::sizeof_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  _pf.INT(node->expression()->type()->size());
+
+  if (node->expression()->is_typed(cdk::TYPE_INT)) {
+    _pf.INT(node->expression()->type()->size());
+    _pf.TRASH(4); // delete the evaluated value
+  } else if (node->expression()->is_typed(cdk::TYPE_STRING)) {
+    _pf.TEXT(node->expression()->type()->size());
+    _pf.TRASH(4); // delete the evaluated value's address
+  } else if (node->expression()->is_typed(cdk::TYPE_DOUBLE)) {
+    _pf.DOUBLE(node->expression()->type()->size());
+    _pf.TRASH(8); // delete the evaluated value
+  } else {
+    std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
+    exit(1);
+  }
 }
 
 void mml::postfix_writer::do_index_node(mml::index_node * const node, int lvl) {
