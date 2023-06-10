@@ -13,16 +13,41 @@ void mml::postfix_writer::do_data_node(cdk::data_node * const node, int lvl) {
   // EMPTY
 }
 void mml::postfix_writer::do_double_node(cdk::double_node * const node, int lvl) {
-  // EMPTY
+  if (isGlobal()) { 
+    _pf.SDOUBLE(node->value()); // integer literal is on the stack: push an integer
+  } else {
+    _pf.SINT(node->value()); // integer literal is on the DATA segment
+  }
 }
 void mml::postfix_writer::do_not_node(cdk::not_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  
+  node->argument()->accept(this, lvl);
+  _pf.NOT();
 }
 void mml::postfix_writer::do_and_node(cdk::and_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  
+  int lbl = ++_lbl;
+  node->left()->accept(this, lvl + 2);
+  _pf.DUP32();
+  _pf.JZ(mklbl(lbl));
+  node->right()->accept(this, lvl + 2);
+  _pf.AND();
+  _pf.ALIGN();
+  _pf.LABEL(mklbl(lbl));
 }
 void mml::postfix_writer::do_or_node(cdk::or_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+
+  int lbl = ++_lbl;
+  node->left()->accept(this, lvl + 2);
+  _pf.DUP32();
+  _pf.JNZ(mklbl(lbl));
+  node->right()->accept(this, lvl + 2);
+  _pf.OR();
+  _pf.ALIGN();
+  _pf.LABEL(mklbl(lbl));
 }
 
 //---------------------------------------------------------------------------
@@ -37,10 +62,10 @@ void mml::postfix_writer::do_sequence_node(cdk::sequence_node * const node, int 
 
 void mml::postfix_writer::do_integer_node(cdk::integer_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  if (_inFunctionBody) { //ALTERAR
-    _pf.INT(node->value()); // integer literal is on the stack: push an integer
-  } else {
+  if (isGlobal()) { 
     _pf.SINT(node->value()); // integer literal is on the DATA segment
+  } else {
+    _pf.INT(node->value()); // integer literal is on the stack: push an integer
   }
 }
 
@@ -54,14 +79,14 @@ void mml::postfix_writer::do_string_node(cdk::string_node * const node, int lvl)
   _pf.LABEL(mklbl(lbl1 = ++_lbl)); // give the string a name
   _pf.SSTRING(node->value()); // output string characters
 
-  if (_function) {  //ALTERAR
+  if (isGlobal()) {
+  // global variable initializer
+    _pf.DATA();
+    _pf.SADDR(mklbl(lbl1));
+  } else {
     // local variable initializer
     _pf.TEXT(); // return to the TEXT segment
     _pf.ADDR(mklbl(lbl1));  // the string to be printed
-  } else {
-    // global variable initializer
-    _pf.DATA();
-    _pf.SADDR(mklbl(lbl1));
   }
 }
 

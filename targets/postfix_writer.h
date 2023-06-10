@@ -20,16 +20,22 @@ namespace mml {
     cdk::symbol_table<mml::symbol> &_symtab;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;
+
+    bool _isGlobal; //Alterar para true?
     
   public:
     postfix_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab,
                    cdk::basic_postfix_emitter &pf) :
-        basic_ast_visitor(compiler), _symtab(symtab), _pf(pf), _lbl(0) {
+        basic_ast_visitor(compiler), _symtab(symtab), _pf(pf), _lbl(0), _isGlobal(false) {
     }
 
   public:
     ~postfix_writer() {
       os().flush();
+    }
+
+    inline bool isGlobal(){
+      return _isGlobal;
     }
 
   private:
