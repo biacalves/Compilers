@@ -14,9 +14,9 @@ void mml::postfix_writer::do_data_node(cdk::data_node * const node, int lvl) {
 }
 void mml::postfix_writer::do_double_node(cdk::double_node * const node, int lvl) {
   if (isGlobal()) { 
-    _pf.SDOUBLE(node->value()); // integer literal is on the stack: push an integer
+    _pf.SDOUBLE(node->value()); // double literal is on the stack: push a double
   } else {
-    _pf.SINT(node->value()); // integer literal is on the DATA segment
+    _pf.DOUBLE(node->value()); // double literal is on the DATA segment
   }
 }
 void mml::postfix_writer::do_not_node(cdk::not_node * const node, int lvl) {

@@ -20,16 +20,26 @@ void mml::type_checker::do_data_node(cdk::data_node *const node, int lvl) {
   // EMPTY
 }
 void mml::type_checker::do_double_node(cdk::double_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
 }
 void mml::type_checker::do_not_node(cdk::not_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  node->argument()->accept(this, lvl + 2);
+  if (node->argument()->is_typed(cdk::TYPE_INT)) {
+    node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  } else if (node->argument()->is_typed(cdk::TYPE_UNSPEC)) {
+    node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+    node->argument()->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  } else {
+    throw std::string("wrong type in unary logical expression");
+  }
 }
 void mml::type_checker::do_and_node(cdk::and_node *const node, int lvl) {
-  // EMPTY
+  processBinaryExpression(node, lvl);
 }
 void mml::type_checker::do_or_node(cdk::or_node *const node, int lvl) {
-  // EMPTY
+  processBinaryExpression(node, lvl);
 }
 
 //---------------------------------------------------------------------------
@@ -164,16 +174,6 @@ void mml::type_checker::do_evaluation_node(mml::evaluation_node *const node, int
 void mml::type_checker::do_print_node(mml::print_node *const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
 }
-
-//---------------------------------------------------------------------------
-
-/*void mml::type_checker::do_read_node(mml::read_node *const node, int lvl) {
-  try {
-    node->argument()->accept(this, lvl);
-  } catch (const std::string &id) {
-    throw "undeclared variable '" + id + "'";
-  }
-}*/
 
 //---------------------------------------------------------------------------
 
