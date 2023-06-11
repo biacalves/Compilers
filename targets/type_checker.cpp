@@ -221,7 +221,22 @@ void mml::type_checker::do_null_node(mml::null_node *const node, int lvl) {
 }
 
 void mml::type_checker::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  node->expression()->accept(this, lvl + 2);
+
+  if (node->expression()->is_typed(cdk::TYPE_INT)) {
+    node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  }
+  else if (node->expression()->is_typed(cdk::TYPE_DOUBLE)) {
+    node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
+  }
+  else if (node->expression()->is_typed(cdk::TYPE_STRING)) {
+    node->type(cdk::primitive_type::create(4, cdk::TYPE_STRING));
+  }
+  else {
+    throw std::string("wrong type in the argument");
+  }
+   
 }
 
 void mml::type_checker::do_index_node(mml::index_node *const node, int lvl) {

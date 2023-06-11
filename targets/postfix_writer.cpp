@@ -357,22 +357,23 @@ void mml::postfix_writer::do_input_node(mml::input_node * const node, int lvl) {
 }
 
 void mml::postfix_writer::do_null_node(mml::null_node * const node, int lvl) {
-  // EMPTY
+  if(isGlobal()){
+    _pf.SINT(0);
+  }
+  else{
+    _pf.INT(0);
+  }
 }
 
 void mml::postfix_writer::do_sizeof_node(mml::sizeof_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  _pf.INT(node->expression()->type()->size());
 
   if (node->expression()->is_typed(cdk::TYPE_INT)) {
     _pf.INT(node->expression()->type()->size());
-    _pf.TRASH(4); // delete the evaluated value
   } else if (node->expression()->is_typed(cdk::TYPE_STRING)) {
     _pf.TEXT(node->expression()->type()->size());
-    _pf.TRASH(4); // delete the evaluated value's address
   } else if (node->expression()->is_typed(cdk::TYPE_DOUBLE)) {
     _pf.DOUBLE(node->expression()->type()->size());
-    _pf.TRASH(8); // delete the evaluated value
   } else {
     std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
     exit(1);
