@@ -9,12 +9,19 @@ namespace mml {
 
   class symbol {
     std::shared_ptr<cdk::basic_type> _type;
-    std::string _name;
-    long _value; // hack!
+    std::string _identifier;
+    int _offset;
+    bool _isPublic;
+    bool _isForward;
+    bool _isForeign;
+    bool _isAuto;
+    bool _isFunction;
 
   public:
-    symbol(std::shared_ptr<cdk::basic_type> type, const std::string &name, long value) :
-        _type(type), _name(name), _value(value) {
+    symbol(std::shared_ptr<cdk::basic_type> type, const std::string &identifier, int offset, bool isPublic,
+    bool isForward, bool isForeign, bool isAuto, bool isFunction):
+        _type(type), _identifier(identifier), _offset(offset), _isPublic(isPublic), _isForward(isForward), _isForeign(isForeign),
+        _isAuto(isAuto), _isFunction(isFunction) {
     }
 
     virtual ~symbol() {
@@ -27,15 +34,33 @@ namespace mml {
     bool is_typed(cdk::typename_type name) const {
       return _type->name() == name;
     }
-    const std::string &name() const {
-      return _name;
+    const std::string &identifier() const {
+      return _identifier;
     }
-    long value() const {
-      return _value;
+    int offset(){
+      return _offset;
     }
-    long value(long v) {
-      return _value = v;
+    void offset(int offset){
+      _offset = offset;
     }
+    bool isPublic() {
+      return _isPublic;
+    }
+    void isPublic(bool isPublic) {
+      _isPublic = isPublic;
+    }
+    bool isForward() {
+      return _isForward;
+    }
+    bool isForeign() {
+      return _isForeign;
+    }
+    bool isAuto() {
+      return _isAuto;
+    }
+    bool isFunction() {
+      return _isFunction;
+    } 
   };
 
 } // mml

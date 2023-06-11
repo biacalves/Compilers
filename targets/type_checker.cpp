@@ -144,7 +144,7 @@ void mml::type_checker::do_rvalue_node(cdk::rvalue_node *const node, int lvl) {
 void mml::type_checker::do_assignment_node(cdk::assignment_node *const node, int lvl) {
   ASSERT_UNSPEC;
 
-  try {
+  /*try {
     node->lvalue()->accept(this, lvl);
   } catch (const std::string &id) {
     auto symbol = std::make_shared<mml::symbol>(cdk::primitive_type::create(4, cdk::TYPE_INT), id, 0);
@@ -159,7 +159,62 @@ void mml::type_checker::do_assignment_node(cdk::assignment_node *const node, int
   if (!node->rvalue()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in right argument of assignment expression");
 
   // in MML, expressions are always int
-  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));*/
+
+  node->lvalue()->accept(this, lvl + 4);
+  node->rvalue()->accept(this, lvl + 4);
+
+  if (node->lvalue()->is_typed(cdk::TYPE_INT)) {
+    if (node->rvalue()->is_typed(cdk::TYPE_INT)) {
+      node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+    } 
+    else if (node->rvalue()->is_typed(cdk::TYPE_UNSPEC)) {
+      node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+      node->rvalue()->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+    } 
+    else {
+      throw std::string("wrong assignment to integer");
+    }
+  } 
+  else if (node->lvalue()->is_typed(cdk::TYPE_POINTER)) {
+    if (node->rvalue()->is_typed(cdk::TYPE_POINTER)) {
+      node->type(cdk::primitive_type::create(4, cdk::TYPE_POINTER));
+    } 
+    else if (node->rvalue()->is_typed(cdk::TYPE_UNSPEC)) {
+      node->type(cdk::primitive_type::create(4, cdk::TYPE_ERROR));
+      node->rvalue()->type(cdk::primitive_type::create(4, cdk::TYPE_ERROR));
+    } 
+    else {
+      throw std::string("wrong assignment to pointer");
+    }
+  } 
+  else if (node->lvalue()->is_typed(cdk::TYPE_DOUBLE)) {
+    if (node->rvalue()->is_typed(cdk::TYPE_DOUBLE) || node->rvalue()->is_typed(cdk::TYPE_INT)) {
+      node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
+    } 
+    else if (node->rvalue()->is_typed(cdk::TYPE_UNSPEC)) {
+      node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
+      node->rvalue()->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
+    } 
+    else {
+      throw std::string("wrong assignment to real");
+    }
+  } 
+  else if (node->lvalue()->is_typed(cdk::TYPE_STRING)) {
+    if (node->rvalue()->is_typed(cdk::TYPE_STRING)) {
+      node->type(cdk::primitive_type::create(4, cdk::TYPE_STRING));
+    } 
+    else if (node->rvalue()->is_typed(cdk::TYPE_UNSPEC)) {
+      node->type(cdk::primitive_type::create(4, cdk::TYPE_STRING));
+      node->rvalue()->type(cdk::primitive_type::create(4, cdk::TYPE_STRING));
+    } 
+    else {
+      throw std::string("wrong assignment to string");
+    }
+
+  } else {
+    throw std::string("wrong types in assignment");
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -217,30 +272,31 @@ void mml::type_checker::do_input_node(mml::input_node *const node, int lvl) {
 }
 
 void mml::type_checker::do_null_node(mml::null_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  node->type(cdk::primitive_type::create(4, cdk::TYPE_POINTER));
 }
 
 void mml::type_checker::do_sizeof_node(mml::sizeof_node *const node, int lvl) {
   ASSERT_UNSPEC;
   node->expression()->accept(this, lvl + 2);
-
-  if (node->expression()->is_typed(cdk::TYPE_INT)) {
-    node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
-  }
-  else if (node->expression()->is_typed(cdk::TYPE_DOUBLE)) {
-    node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
-  }
-  else if (node->expression()->is_typed(cdk::TYPE_STRING)) {
-    node->type(cdk::primitive_type::create(4, cdk::TYPE_STRING));
-  }
-  else {
-    throw std::string("wrong type in the argument");
-  }
-   
+  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));   
 }
 
 void mml::type_checker::do_index_node(mml::index_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+
+  node->ptr()->accept(this, lvl);
+
+  if(!node->ptr()->is_typed(cdk::TYPE_POINTER)){
+    throw std::string("Wrong type for base in pointer.");
+  }
+
+  node->index()->accept(this, lvl);
+  if(!node->index()->is_typed(cdk::TYPE_INT)){
+    throw std::string("Wrong type for index in pointer.");
+  }
+
+  node->type(std::dynamic_pointer_cast<cdk::reference_type>(node->ptr()->type())->referenced());
 }
 
 void mml::type_checker::do_mem_alloc_node(mml::mem_alloc_node *const node, int lvl) {
@@ -252,7 +308,40 @@ void mml::type_checker::do_address_node(mml::address_node *const node, int lvl) 
 }
 
 void mml::type_checker::do_variable_decl_node(mml::variable_decl_node *const node, int lvl) {
-  // EMPTY
+  if (node->initializer() != nullptr) {
+    node->initializer()->accept(this, lvl + 2);
+
+    if (node->is_typed(cdk::TYPE_INT)) {
+      if (!node->initializer()->is_typed(cdk::TYPE_INT)) 
+        throw std::string("wrong type for initializer (integer expected).");
+    } 
+    else if (node->is_typed(cdk::TYPE_DOUBLE)) {
+      if (!node->initializer()->is_typed(cdk::TYPE_INT) && !node->initializer()->is_typed(cdk::TYPE_DOUBLE)) {
+        throw std::string("wrong type for initializer (integer or double expected).");
+      }
+    } 
+    else if (node->is_typed(cdk::TYPE_STRING)) {
+      if (!node->initializer()->is_typed(cdk::TYPE_STRING)) {
+        throw std::string("wrong type for initializer (string expected).");
+      }
+    } 
+    else if (node->is_typed(cdk::TYPE_POINTER)) {
+      if (!node->initializer()->is_typed(cdk::TYPE_POINTER)) {
+        throw std::string("wrong type for initializer (pointer expected).");
+      }
+    } 
+    else {
+      throw std::string("unknown type for initializer.");
+    }
+  }
+
+  if(!_symtab.find(node->identifier())) {
+    _symtab.insert(node->identifier(), std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto(), false));
+    _parent->set_new_symbol(std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto(), false));
+  }
+  else {
+    throw std::string("variable '" + node->identifier() + "' redeclared");
+  }
 }
 
 void mml::type_checker::do_func_definition_node(mml::func_definition_node *const node, int lvl) {
