@@ -8,7 +8,8 @@
 //---------------------------------------------------------------------------
 
 void mml::type_checker::do_sequence_node(cdk::sequence_node *const node, int lvl) {
-  // EMPTY
+  for (size_t i = 0; i < node->size(); i++)
+    node->node(i)->accept(this, lvl);
 }
 
 //---------------------------------------------------------------------------
@@ -164,7 +165,9 @@ void mml::type_checker::do_assignment_node(cdk::assignment_node *const node, int
 //---------------------------------------------------------------------------
 
 void mml::type_checker::do_program_node(mml::program_node *const node, int lvl) {
-  // EMPTY
+  node->declarations()->accept(this, lvl);
+  node->instructions()->accept(this, lvl);
+  
 }
 
 void mml::type_checker::do_evaluation_node(mml::evaluation_node *const node, int lvl) {

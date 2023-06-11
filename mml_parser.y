@@ -39,7 +39,7 @@
 %token tIF tELIF tELSE tWHILE tSTOP tNEXT tRETURN
 %token tINPUT tNULL tSIZEOF
 %token tBEGIN tEND
-%token tGE tLE tEQ tNE tAND tOR
+%token tLT tGT tGE tLE tEQ tNE tAND tOR
 %token tPRINT tPRINTLN
 
 %token <i> tINTEGER
@@ -52,11 +52,13 @@
 %right '='
 %left tOR
 %left tAND
+
 %nonassoc '~'
 %left tNE tEQ
-%left '<' tLE tGE '>' 
+%left tLT tLE tGE tGT 
 %left '+' '-'
 %left '*' '/' '%'
+
 %nonassoc tUNARY
 %nonassoc '[' 
 
@@ -199,8 +201,8 @@ expr           : integer                                    { $$ = $1; }
                | expr '*' expr	                            { $$ = new cdk::mul_node(LINE, $1, $3); }
                | expr '/' expr	                            { $$ = new cdk::div_node(LINE, $1, $3); }
                | expr '%' expr	                            { $$ = new cdk::mod_node(LINE, $1, $3); }
-               | expr '<' expr	                            { $$ = new cdk::lt_node(LINE, $1, $3); }
-               | expr '>' expr	                            { $$ = new cdk::gt_node(LINE, $1, $3); }
+               | expr tLT expr	                            { $$ = new cdk::lt_node(LINE, $1, $3); }
+               | expr tGT expr	                            { $$ = new cdk::gt_node(LINE, $1, $3); }
                | expr tGE expr	                            { $$ = new cdk::ge_node(LINE, $1, $3); }
                | expr tLE expr                              { $$ = new cdk::le_node(LINE, $1, $3); }
                | expr tNE expr	                            { $$ = new cdk::ne_node(LINE, $1, $3); }

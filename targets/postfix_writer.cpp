@@ -96,11 +96,7 @@ void mml::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
   node->argument()->accept(this, lvl); // determine the value
-
-  if(node->type()->name() == cdk::TYPE_DOUBLE)
-    _pf.DNEG(); // 2-complement
-  else
-    _pf.NEG();
+  _pf.NEG();
 }
 
 //---------------------------------------------------------------------------

@@ -56,6 +56,9 @@ IDENTIFIER   {LETTER}({LETTER}|[[:digit:]])*
 "begin"                return tBEGIN; 
 "end"                  return tEND; 
 
+
+"<"                    return tLT;
+">"                    return tGT;
 ">="                   return tGE; 
 "<="                   return tLE; 
 "=="                   return tEQ; 
