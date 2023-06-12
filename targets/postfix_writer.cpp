@@ -9,22 +9,27 @@
 void mml::postfix_writer::do_nil_node(cdk::nil_node * const node, int lvl) {
   // EMPTY
 }
+
 void mml::postfix_writer::do_data_node(cdk::data_node * const node, int lvl) {
   // EMPTY
 }
+
 void mml::postfix_writer::do_double_node(cdk::double_node * const node, int lvl) {
   if (isGlobal()) { 
     _pf.SDOUBLE(node->value()); // double literal is on the stack: push a double
-  } else {
+  } 
+  else {
     _pf.DOUBLE(node->value()); // double literal is on the DATA segment
   }
 }
+
 void mml::postfix_writer::do_not_node(cdk::not_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   
   node->argument()->accept(this, lvl);
   _pf.NOT();
 }
+
 void mml::postfix_writer::do_and_node(cdk::and_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   
@@ -37,6 +42,7 @@ void mml::postfix_writer::do_and_node(cdk::and_node * const node, int lvl) {
   _pf.ALIGN();
   _pf.LABEL(mklbl(lbl));
 }
+
 void mml::postfix_writer::do_or_node(cdk::or_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
@@ -83,7 +89,8 @@ void mml::postfix_writer::do_string_node(cdk::string_node * const node, int lvl)
   // global variable initializer
     _pf.DATA();
     _pf.SADDR(mklbl(lbl1));
-  } else {
+  } 
+  else {
     // local variable initializer
     _pf.TEXT(); // return to the TEXT segment
     _pf.ADDR(mklbl(lbl1));  // the string to be printed
@@ -96,7 +103,10 @@ void mml::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
   node->argument()->accept(this, lvl); // determine the value
-  _pf.NEG();
+  if(node->type()->name() == cdk::TYPE_DOUBLE)
+    _pf.DNEG(); 
+  else
+    _pf.NEG();
 }
 
 //---------------------------------------------------------------------------
@@ -104,19 +114,31 @@ void mml::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
 void mml::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
-   node->left()->accept(this, lvl + 2);
+  node->left()->accept(this, lvl + 2);
   if (node->type()->name() == cdk::TYPE_DOUBLE && node->left()->type()->name() == cdk::TYPE_INT) {
     _pf.I2D();
-  } else if (node->type()->name() == cdk::TYPE_POINTER && node->left()->type()->name() == cdk::TYPE_INT) {
-    _pf.INT(3);
+  } 
+  else if (node->type()->name() == cdk::TYPE_POINTER && node->left()->type()->name() == cdk::TYPE_INT) {
+    if(std::dynamic_pointer_cast<cdk::reference_type>(node->type())->referenced()->name() == cdk::TYPE_DOUBLE) {
+      _pf.INT(3);
+    }
+    else {
+      _pf.INT(2);
+    }
     _pf.SHTL();
   }
 
-  node->right()->accept(this, lvl + 2);
+  node->right()->accept(this, lvl);
   if (node->type()->name() == cdk::TYPE_DOUBLE && node->right()->type()->name() == cdk::TYPE_INT) {
     _pf.I2D();
-  } else if (node->type()->name() == cdk::TYPE_POINTER && node->right()->type()->name() == cdk::TYPE_INT) {
-    _pf.INT(3);
+  } 
+  else if (node->type()->name() == cdk::TYPE_POINTER && node->right()->type()->name() == cdk::TYPE_INT) {
+    if(std::dynamic_pointer_cast<cdk::reference_type>(node->type())->referenced()->name() == cdk::TYPE_DOUBLE) {
+      _pf.INT(3);
+    }
+    else {
+      _pf.INT(2);
+    }
     _pf.SHTL();
   }
 
@@ -148,65 +170,179 @@ void mml::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
 
 void mml::postfix_writer::do_mul_node(cdk::mul_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+  
   node->left()->accept(this, lvl);
+  if (node->type()->name() == cdk::TYPE_DOUBLE && node->left()->type()->name() == cdk::TYPE_INT) {
+    _pf.I2D();
+  }
+
   node->right()->accept(this, lvl);
-  _pf.MUL();
+  if (node->type()->name() == cdk::TYPE_DOUBLE && node->right()->type()->name() == cdk::TYPE_INT) {
+    _pf.I2D();
+  }
+
+  if(node->type()->name() == cdk::TYPE_DOUBLE)
+    _pf.DMUL();
+  else
+    _pf.MUL();
 }
+
 void mml::postfix_writer::do_div_node(cdk::div_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+
   node->left()->accept(this, lvl);
+  if (node->type()->name() == cdk::TYPE_DOUBLE && node->left()->type()->name() == cdk::TYPE_INT) {
+    _pf.I2D();
+  }
+
   node->right()->accept(this, lvl);
-  _pf.DIV();
+  if (node->type()->name() == cdk::TYPE_DOUBLE && node->right()->type()->name() == cdk::TYPE_INT) {
+    _pf.I2D();
+  }
+
+  if(node->type()->name() == cdk::TYPE_DOUBLE)
+    _pf.DDIV();
+  else
+    _pf.DIV();
 }
+
 void mml::postfix_writer::do_mod_node(cdk::mod_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->left()->accept(this, lvl);
   node->right()->accept(this, lvl);
   _pf.MOD();
 }
+
 void mml::postfix_writer::do_lt_node(cdk::lt_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+  
   node->left()->accept(this, lvl);
+  if(node->left()->type()->name() == cdk::TYPE_INT && node->right()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+  
   node->right()->accept(this, lvl);
-  _pf.LT();
+  if(node->right()->type()->name() == cdk::TYPE_INT && node->left()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+
+  if(node->left()->type()->name() == cdk::TYPE_DOUBLE || node->right()->type()->name() == cdk::TYPE_DOUBLE) {
+    _pf.DCMP();
+    _pf.INT(0);
+  }
+  else
+    _pf.LT();
 }
+
 void mml::postfix_writer::do_le_node(cdk::le_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->left()->accept(this, lvl);
+  if(node->left()->type()->name() == cdk::TYPE_INT && node->right()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+  
   node->right()->accept(this, lvl);
-  _pf.LE();
+  if(node->right()->type()->name() == cdk::TYPE_INT && node->left()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+
+  if(node->left()->type()->name() == cdk::TYPE_DOUBLE || node->right()->type()->name() == cdk::TYPE_DOUBLE) {
+    _pf.DCMP();
+    _pf.INT(0);
+  }
+  else
+    _pf.LE();
 }
+
 void mml::postfix_writer::do_ge_node(cdk::ge_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->left()->accept(this, lvl);
+  if(node->left()->type()->name() == cdk::TYPE_INT && node->right()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+  
   node->right()->accept(this, lvl);
-  _pf.GE();
+  if(node->right()->type()->name() == cdk::TYPE_INT && node->left()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+
+  if(node->left()->type()->name() == cdk::TYPE_DOUBLE || node->right()->type()->name() == cdk::TYPE_DOUBLE) {
+    _pf.DCMP();
+    _pf.INT(0);
+  }
+  else
+    _pf.GE();
 }
+
 void mml::postfix_writer::do_gt_node(cdk::gt_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->left()->accept(this, lvl);
+  if(node->left()->type()->name() == cdk::TYPE_INT && node->right()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+  
   node->right()->accept(this, lvl);
-  _pf.GT();
+  if(node->right()->type()->name() == cdk::TYPE_INT && node->left()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+
+  if(node->left()->type()->name() == cdk::TYPE_DOUBLE || node->right()->type()->name() == cdk::TYPE_DOUBLE) {
+    _pf.DCMP();
+    _pf.INT(0);
+  }
+  else
+    _pf.GT();
 }
+
 void mml::postfix_writer::do_ne_node(cdk::ne_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->left()->accept(this, lvl);
+  if(node->left()->type()->name() == cdk::TYPE_INT && node->right()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+  
   node->right()->accept(this, lvl);
-  _pf.NE();
+  if(node->right()->type()->name() == cdk::TYPE_INT && node->left()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+
+  if(node->left()->type()->name() == cdk::TYPE_DOUBLE || node->right()->type()->name() == cdk::TYPE_DOUBLE) {
+    _pf.DCMP();
+    _pf.INT(0);
+  }
+  else
+    _pf.NE();
 }
+
 void mml::postfix_writer::do_eq_node(cdk::eq_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->left()->accept(this, lvl);
+  if(node->left()->type()->name() == cdk::TYPE_INT && node->right()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+  
   node->right()->accept(this, lvl);
-  _pf.EQ();
+  if(node->right()->type()->name() == cdk::TYPE_INT && node->left()->type()->name() == cdk::TYPE_DOUBLE){
+    _pf.I2D();
+  }
+
+  if(node->left()->type()->name() == cdk::TYPE_DOUBLE || node->right()->type()->name() == cdk::TYPE_DOUBLE) {
+    _pf.DCMP();
+    _pf.INT(0);
+  }
+  else
+    _pf.EQ();
 }
 
 //---------------------------------------------------------------------------
 
 void mml::postfix_writer::do_variable_node(cdk::variable_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+
+  std::shared_ptr<mml::symbol> symb = _symtab.find(node->name());
   // simplified generation: all variables are global
-  _pf.ADDR(node->name());
+  
+  _pf.ADDR(symb->identifier());
 }
 
 void mml::postfix_writer::do_rvalue_node(cdk::rvalue_node * const node, int lvl) {
@@ -220,20 +356,6 @@ void mml::postfix_writer::do_rvalue_node(cdk::rvalue_node * const node, int lvl)
 
 void mml::postfix_writer::do_assignment_node(cdk::assignment_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  /*node->rvalue()->accept(this, lvl); // determine the new value
-  _pf.DUP32();
-  if (new_symbol() == nullptr) {
-    node->lvalue()->accept(this, lvl); // where to store the value
-  } else {
-    _pf.DATA(); // variables are all global and live in DATA
-    _pf.ALIGN(); // make sure we are aligned
-    _pf.LABEL(new_symbol()->identifier()); // name variable location
-    reset_new_symbol();
-    _pf.SINT(0); // initialize it to 0 (zero)
-    _pf.TEXT(); // return to the TEXT segment
-    node->lvalue()->accept(this, lvl);  //DAVID: bah!
-  }
-  _pf.STINT(); // store the value at address*/
 
   node->rvalue()->accept(this, lvl); 
   if(node->is_typed(cdk::TYPE_DOUBLE)){
@@ -393,7 +515,17 @@ void mml::postfix_writer::do_return_node(mml::return_node * const node, int lvl)
 }
 
 void mml::postfix_writer::do_block_node(mml::block_node * const node, int lvl) {
-  // EMPTY
+  _symtab.push();
+
+  if(node->declarations()){
+    node->declarations()->accept(this, lvl+2);
+  }
+
+  if(node->instructions()){
+    node->instructions()->accept(this, lvl+2);
+  }
+
+  _symtab.pop();
 }
 
 void mml::postfix_writer::do_input_node(mml::input_node * const node, int lvl) {
@@ -446,43 +578,56 @@ void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const 
   ASSERT_SAFE_EXPRESSIONS;
 
   auto id = node->identifier();
+  std::shared_ptr<mml::symbol> symb = _symtab.find(id);
   int typesize = node->type()->size();
 
-  if (node->initializer() == nullptr) { //not initialized
+  if(symb != nullptr && isGlobal()) {
+    _pf.GLOBAL(id, _pf.OBJ());
+  }
+  if (!node->initializer()) { //not initialized
     _pf.BSS();
     _pf.ALIGN();
-    _pf.GLOBAL(id, _pf.OBJ());
     _pf.LABEL(id);
-    _pf.SALLOC(typesize);
-
+    _pf.SBYTE(typesize);
   } 
   else { //initialized
-    if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_DOUBLE) || node->is_typed(cdk::TYPE_POINTER)) {
-      if (isGlobal()) {
-        _pf.RODATA();
-      } 
-      else {
-        _pf.DATA();
-      }
-      _pf.ALIGN();
-      _pf.LABEL(id);
+    _pf.DATA();
+    _pf.ALIGN();
+    _pf.LABEL(id);
 
-      if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_POINTER)) {
-        node->initializer()->accept(this, lvl);
-      } 
-      else if (node->is_typed(cdk::TYPE_DOUBLE)) {
-        if (node->initializer()->type()->name() == cdk::TYPE_DOUBLE) {
-          node->initializer()->accept(this, lvl);
-        } 
-        else if (node->initializer()->is_typed(cdk::TYPE_INT)) {
-          //create double node from int node
-          cdk::integer_node *i = dynamic_cast<cdk::integer_node*>(node->initializer());
-          cdk::double_node d(i->lineno(), i->value());
-          d.accept(this, lvl);
-        } 
-        else {
-          std::cerr << node->lineno() << ": '" << id << "' has bad initializer for real value\n";
-        }
+    if(node->is_typed(cdk::TYPE_DOUBLE) && node->initializer()->is_typed(cdk::TYPE_INT)){
+      cdk::integer_node *intNode = dynamic_cast<cdk::integer_node*>(node->initializer());
+      cdk::double_node* i2dNode = new cdk::double_node(intNode->lineno(), intNode->value());
+      i2dNode->accept(this, lvl);
+    } 
+    else{
+      node->initializer()->accept(this, lvl);
+    }
+      
+    if(node->is_typed(cdk::TYPE_DOUBLE) && node->initializer()->is_typed(cdk::TYPE_INT)){
+      _pf.I2D();
+    }
+
+    if(node->is_typed(cdk::TYPE_DOUBLE)){
+      _pf.DUP64();
+      _pf.LOCAL(symb->offset());
+      _pf.STDOUBLE();
+    }
+    else if(node->is_typed(cdk::TYPE_INT)){
+      _pf.DUP32();
+      _pf.LOCAL(symb->offset());
+      _pf.STINT();
+    }
+    else if(node->is_typed(cdk::TYPE_POINTER)){
+      if (std::dynamic_pointer_cast<cdk::reference_type>(node->type())->referenced()->name() == cdk::TYPE_DOUBLE){
+        _pf.DUP64();
+        _pf.LOCAL(symb->offset());
+        _pf.STDOUBLE();
+      }
+      else if(std::dynamic_pointer_cast<cdk::reference_type>(node->type())->referenced()->name() == cdk::TYPE_INT){
+        _pf.DUP32();
+        _pf.LOCAL(symb->offset());
+        _pf.STINT();
       }
     } 
     else if (node->is_typed(cdk::TYPE_STRING)) {

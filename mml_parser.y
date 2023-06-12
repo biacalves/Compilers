@@ -219,7 +219,7 @@ expr           : integer                                    { $$ = $1; }
                | '(' expr ')'                               { $$ = $2; }
                ;
 
-lval           : tIDENTIFIER                                { $$ = new cdk::variable_node(LINE, $1); }
+lval           : tIDENTIFIER                                { $$ = new cdk::variable_node(LINE, $1); delete $1;}
                | expr '[' expr ']'                          { $$ = new mml::index_node(LINE, $1, $3);}
                ;
 
@@ -229,5 +229,6 @@ string         : tSTRING                                    { $$ = $1; }
 
 integer        : tINTEGER                                   { $$ = new cdk::integer_node(LINE, $1); };
                ;
+
 
 %%

@@ -84,8 +84,24 @@ void mml::type_checker::processBinaryExpression(cdk::binary_operation_node *cons
   node->right()->accept(this, lvl + 2);
   if (!node->right()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in right argument of binary expression");
 
-  // in MML, expressions are always int
-  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  if(node->left()->is_typed(cdk::TYPE_INT)){
+    if(node->right()->is_typed(cdk::TYPE_INT))
+      node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+    if(node->right()->is_typed(cdk::TYPE_DOUBLE))
+      node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
+    if(node->right()->is_typed(cdk::TYPE_POINTER))
+      node->type(cdk::primitive_type::create(4, cdk::TYPE_POINTER));
+  }
+  if(node->left()->is_typed(cdk::TYPE_DOUBLE)){
+    if(node->right()->is_typed(cdk::TYPE_INT))
+      node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
+    if(node->right()->is_typed(cdk::TYPE_DOUBLE))
+      node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
+  }
+  if(node->left()->is_typed(cdk::TYPE_POINTER)){
+    if(node->right()->is_typed(cdk::TYPE_INT))
+      node->type(cdk::primitive_type::create(4, cdk::TYPE_POINTER));
+  }
 }
 
 void mml::type_checker::do_add_node(cdk::add_node *const node, int lvl) {
