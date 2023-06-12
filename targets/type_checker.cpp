@@ -59,10 +59,15 @@ void mml::type_checker::do_string_node(cdk::string_node *const node, int lvl) {
 
 void mml::type_checker::processUnaryExpression(cdk::unary_operation_node *const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
-  if (!node->argument()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in argument of unary expression");
-
-  // in MML, expressions are always int
-  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  if (node->argument()->is_typed(cdk::TYPE_INT)) {
+    node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  }
+  else if(node->argument()->is_typed(cdk::TYPE_DOUBLE)){
+    node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
+  }
+  else{
+    throw std::string("wrong type in argument of unary expression");
+  }
 }
 
 void mml::type_checker::do_neg_node(cdk::neg_node *const node, int lvl) {
@@ -300,11 +305,17 @@ void mml::type_checker::do_index_node(mml::index_node *const node, int lvl) {
 }
 
 void mml::type_checker::do_mem_alloc_node(mml::mem_alloc_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  node->argument()->accept(this, lvl + 2);
+  if (!node->argument()->is_typed(cdk::TYPE_INT)) {
+    throw std::string("integer expression expected in allocation expression");
+  }
 }
 
 void mml::type_checker::do_address_node(mml::address_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  node->lvalue()->accept(this, lvl + 2);
+  node->type(cdk::reference_type::create(4, node->lvalue()->type()));
 }
 
 void mml::type_checker::do_variable_decl_node(mml::variable_decl_node *const node, int lvl) {

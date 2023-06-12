@@ -103,6 +103,7 @@ void mml::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
 
 void mml::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+
    node->left()->accept(this, lvl + 2);
   if (node->type()->name() == cdk::TYPE_DOUBLE && node->left()->type()->name() == cdk::TYPE_INT) {
     _pf.I2D();
@@ -124,12 +125,27 @@ void mml::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
   else
     _pf.ADD();
 }
+
 void mml::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.SUB();
+
+  node->left()->accept(this, lvl + 2);
+  if (node->type()->name() == cdk::TYPE_DOUBLE && node->left()->type()->name() == cdk::TYPE_INT) _pf.I2D();
+
+  node->right()->accept(this, lvl + 2);
+  if (node->type()->name() == cdk::TYPE_DOUBLE && node->right()->type()->name() == cdk::TYPE_INT) {
+    _pf.I2D();
+  } else if (node->type()->name() == cdk::TYPE_POINTER && node->right()->type()->name() == cdk::TYPE_INT) {
+    _pf.INT(3);
+    _pf.SHTL();
+  }
+
+  if (node->type()->name() == cdk::TYPE_DOUBLE)
+    _pf.DSUB();
+  else
+    _pf.SUB();
 }
+
 void mml::postfix_writer::do_mul_node(cdk::mul_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->left()->accept(this, lvl);
@@ -196,12 +212,15 @@ void mml::postfix_writer::do_variable_node(cdk::variable_node * const node, int 
 void mml::postfix_writer::do_rvalue_node(cdk::rvalue_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   node->lvalue()->accept(this, lvl);
-  _pf.LDINT(); // depends on type size
+  if(!(node->type()->name() == cdk::TYPE_DOUBLE))
+    _pf.LDINT();
+  else
+    _pf.LDDOUBLE();
 }
 
 void mml::postfix_writer::do_assignment_node(cdk::assignment_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  node->rvalue()->accept(this, lvl); // determine the new value
+  /*node->rvalue()->accept(this, lvl); // determine the new value
   _pf.DUP32();
   if (new_symbol() == nullptr) {
     node->lvalue()->accept(this, lvl); // where to store the value
@@ -214,7 +233,25 @@ void mml::postfix_writer::do_assignment_node(cdk::assignment_node * const node, 
     _pf.TEXT(); // return to the TEXT segment
     node->lvalue()->accept(this, lvl);  //DAVID: bah!
   }
-  _pf.STINT(); // store the value at address
+  _pf.STINT(); // store the value at address*/
+
+  node->rvalue()->accept(this, lvl); 
+  if(node->is_typed(cdk::TYPE_DOUBLE)){
+    if(node->rvalue()->is_typed(cdk::TYPE_INT)){
+      _pf.I2D();
+    }
+    _pf.DUP64();
+  }
+  else
+    _pf.DUP32();
+
+  node->lvalue()->accept(this, lvl);
+  if(node->lvalue()->is_typed(cdk::TYPE_DOUBLE)) {
+    _pf.STDOUBLE();
+  }
+  else {
+    _pf.STINT();
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -305,16 +342,6 @@ void mml::postfix_writer::do_print_node(mml::print_node * const node, int lvl) {
 
 //---------------------------------------------------------------------------
 
-/*void mml::postfix_writer::do_read_node(mml::read_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS;
-  _pf.CALL("readi");
-  _pf.LDFVAL32();
-  node->argument()->accept(this, lvl);
-  _pf.STINT();
-}*/
-
-//---------------------------------------------------------------------------
-
 void mml::postfix_writer::do_while_node(mml::while_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   int lbl1, lbl2;
@@ -400,11 +427,19 @@ void mml::postfix_writer::do_index_node(mml::index_node * const node, int lvl) {
 }
 
 void mml::postfix_writer::do_mem_alloc_node(mml::mem_alloc_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  
+  node->argument()->accept(this, lvl);
+  _pf.INT(3);
+  _pf.SHTL();
+  _pf.ALLOC(); // allocate
+  _pf.SP(); // put base pointer in stack
 }
 
 void mml::postfix_writer::do_address_node(mml::address_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  
+  node->lvalue()->accept(this, lvl + 2);
 }
 
 void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const node, int lvl) {
