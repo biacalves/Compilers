@@ -75,7 +75,7 @@
 %}
 %%
 
-file           : declarations program                       { compiler -> ast($1);}
+file           : declarations program                       { compiler -> ast(new cdk::sequence_node(LINE, $2, $1));}
                | program                                    { compiler -> ast($1);}
                | declarations                               { compiler -> ast($1);}
                |                                            { compiler -> ast(new cdk::sequence_node(LINE));}

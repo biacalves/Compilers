@@ -103,9 +103,26 @@ void mml::postfix_writer::do_neg_node(cdk::neg_node * const node, int lvl) {
 
 void mml::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  node->left()->accept(this, lvl);
-  node->right()->accept(this, lvl);
-  _pf.ADD();
+   node->left()->accept(this, lvl + 2);
+  if (node->type()->name() == cdk::TYPE_DOUBLE && node->left()->type()->name() == cdk::TYPE_INT) {
+    _pf.I2D();
+  } else if (node->type()->name() == cdk::TYPE_POINTER && node->left()->type()->name() == cdk::TYPE_INT) {
+    _pf.INT(3);
+    _pf.SHTL();
+  }
+
+  node->right()->accept(this, lvl + 2);
+  if (node->type()->name() == cdk::TYPE_DOUBLE && node->right()->type()->name() == cdk::TYPE_INT) {
+    _pf.I2D();
+  } else if (node->type()->name() == cdk::TYPE_POINTER && node->right()->type()->name() == cdk::TYPE_INT) {
+    _pf.INT(3);
+    _pf.SHTL();
+  }
+
+  if (node->type()->name() == cdk::TYPE_DOUBLE)
+    _pf.DADD();
+  else
+    _pf.ADD();
 }
 void mml::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
@@ -393,91 +410,67 @@ void mml::postfix_writer::do_address_node(mml::address_node * const node, int lv
 void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
-  /*std::shared_ptr<mml::symbol> symbol = _symtab.find(node->identifier());
-
-  if(symbol != nullptr && isGlobal()){
-    symbol->isPublic(true);
-    symbol->offset(0);
-    _pf.GLOBAL(node->identifier(), _pf.OBJ());
-
-    if(!node->initializer()){
-      _pf.BSS();
-      _pf.ALIGN();
-      _pf.LABEL(node->identifier());
-      _pf.SBYTE(node->type()->size());
-    }
-    else{
-      _pf.DATA();
-      _pf.ALIGN();
-      _pf.LABEL(node->identifier());
-
-      if(node->is_typed(cdk::TYPE_DOUBLE) && node->initializer()->is_typed(cdk::TYPE_INT)){
-        cdk::integer_node *intNode = dynamic_cast<cdk::integer_node*>(node->initializer());
-        cdk::double_node* i2dNode = new cdk::double_node(intNode->lineno(), intNode->value());
-        i2dNode->accept(this, lvl);
-      } 
-      else{
-        node->initializer()->accept(this, lvl);
-      }
-    }
-  }*/
-
   auto id = node->identifier();
   int typesize = node->type()->size();
 
   if (node->initializer() == nullptr) { //not initialized
-        _pf.BSS();
-        _pf.ALIGN();
-        _pf.GLOBAL(id, _pf.OBJ());
-        _pf.LABEL(id);
-        _pf.SALLOC(typesize);
+    _pf.BSS();
+    _pf.ALIGN();
+    _pf.GLOBAL(id, _pf.OBJ());
+    _pf.LABEL(id);
+    _pf.SALLOC(typesize);
 
-      } else { //initialized
-        if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_DOUBLE) || node->is_typed(cdk::TYPE_POINTER)) {
-          if (isGlobal()) {
-            _pf.RODATA();
-          } else {
-            _pf.DATA();
-          }
-          _pf.ALIGN();
-          _pf.LABEL(id);
+  } 
+  else { //initialized
+    if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_DOUBLE) || node->is_typed(cdk::TYPE_POINTER)) {
+      if (isGlobal()) {
+        _pf.RODATA();
+      } 
+      else {
+        _pf.DATA();
+      }
+      _pf.ALIGN();
+      _pf.LABEL(id);
 
-          if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_POINTER)) {
-            node->initializer()->accept(this, lvl);
-          } else if (node->is_typed(cdk::TYPE_DOUBLE)) {
-            if (node->initializer()->type()->name() == cdk::TYPE_DOUBLE) {
-              node->initializer()->accept(this, lvl);
-            } else if (node->initializer()->is_typed(cdk::TYPE_INT)) {
-              //create double node from int node
-              cdk::integer_node *i = dynamic_cast<cdk::integer_node*>(node->initializer());
-              cdk::double_node d(i->lineno(), i->value());
-              d.accept(this, lvl);
-            } else {
-              std::cerr << node->lineno() << ": '" << id << "' has bad initializer for real value\n";
-            }
-          }
-
-        } else if (node->is_typed(cdk::TYPE_STRING)) {
-          if (isGlobal()) {
-            int strlbl;
-            _pf.RODATA();
-            _pf.ALIGN();
-            _pf.LABEL(mklbl(strlbl = ++_lbl));
-            _pf.SSTRING(dynamic_cast<cdk::string_node*>(node->initializer())->value());
-            _pf.ALIGN();
-            _pf.LABEL(id);
-            _pf.SADDR(mklbl(strlbl));
-          } else {
-            _pf.DATA();
-            _pf.ALIGN();
-            _pf.LABEL(id);
-            node->initializer()->accept(this, lvl);
-          }
-
-        } else {
-          std::cerr << node->lineno() << ": '" << id << "' has unexpected initializer\n";
+      if (node->is_typed(cdk::TYPE_INT) || node->is_typed(cdk::TYPE_POINTER)) {
+        node->initializer()->accept(this, lvl);
+      } 
+      else if (node->is_typed(cdk::TYPE_DOUBLE)) {
+        if (node->initializer()->type()->name() == cdk::TYPE_DOUBLE) {
+          node->initializer()->accept(this, lvl);
+        } 
+        else if (node->initializer()->is_typed(cdk::TYPE_INT)) {
+          //create double node from int node
+          cdk::integer_node *i = dynamic_cast<cdk::integer_node*>(node->initializer());
+          cdk::double_node d(i->lineno(), i->value());
+          d.accept(this, lvl);
+        } 
+        else {
+          std::cerr << node->lineno() << ": '" << id << "' has bad initializer for real value\n";
         }
-  
+      }
+    } 
+    else if (node->is_typed(cdk::TYPE_STRING)) {
+      if (isGlobal()) {
+        int strlbl;
+        _pf.RODATA();
+        _pf.ALIGN();
+        _pf.LABEL(mklbl(strlbl = ++_lbl));
+        _pf.SSTRING(dynamic_cast<cdk::string_node*>(node->initializer())->value());
+        _pf.ALIGN();
+        _pf.LABEL(id);
+        _pf.SADDR(mklbl(strlbl));
+      } 
+      else {
+        _pf.DATA();
+        _pf.ALIGN();
+        _pf.LABEL(id);
+        node->initializer()->accept(this, lvl);
+      }
+    } 
+    else {
+      std::cerr << node->lineno() << ": '" << id << "' has unexpected initializer\n";
+    }
   }
 }
 
