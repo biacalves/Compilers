@@ -408,6 +408,7 @@ void mml::postfix_writer::do_program_node(mml::program_node * const node, int lv
 
   // these are just a few library function imports
   _pf.EXTERN("readi");
+  _pf.EXTERN("readd");
   _pf.EXTERN("printi");
   _pf.EXTERN("prints");
   _pf.EXTERN("printd");
@@ -529,7 +530,22 @@ void mml::postfix_writer::do_block_node(mml::block_node * const node, int lvl) {
 }
 
 void mml::postfix_writer::do_input_node(mml::input_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  
+  if (node->is_typed(cdk::TYPE_DOUBLE)) {
+    _functions_to_declare.insert("readd");
+    _pf.CALL("readd");
+    _pf.LDFVAL64();
+  } 
+  else if (node->is_typed(cdk::TYPE_INT)) {
+    _functions_to_declare.insert("readi");
+    _pf.CALL("readi");
+    _pf.LDFVAL32();
+  } 
+  else {
+    std::cerr << "FATAL: " << node->lineno() << ": cannot read type" << std::endl;
+    return;
+  }
 }
 
 void mml::postfix_writer::do_null_node(mml::null_node * const node, int lvl) {
@@ -584,6 +600,7 @@ void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const 
   if(symb != nullptr && isGlobal()) {
     _pf.GLOBAL(id, _pf.OBJ());
   }
+  
   if (!node->initializer()) { //not initialized
     _pf.BSS();
     _pf.ALIGN();
@@ -603,50 +620,18 @@ void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const 
     else{
       node->initializer()->accept(this, lvl);
     }
-      
-    if(node->is_typed(cdk::TYPE_DOUBLE) && node->initializer()->is_typed(cdk::TYPE_INT)){
-      _pf.I2D();
-    }
 
     if(node->is_typed(cdk::TYPE_DOUBLE)){
-      _pf.DUP64();
-      _pf.LOCAL(symb->offset());
-      _pf.STDOUBLE();
+      node->initializer()->accept(this, lvl);
     }
     else if(node->is_typed(cdk::TYPE_INT)){
-      _pf.DUP32();
-      _pf.LOCAL(symb->offset());
-      _pf.STINT();
+      node->initializer()->accept(this, lvl);
     }
     else if(node->is_typed(cdk::TYPE_POINTER)){
-      if (std::dynamic_pointer_cast<cdk::reference_type>(node->type())->referenced()->name() == cdk::TYPE_DOUBLE){
-        _pf.DUP64();
-        _pf.LOCAL(symb->offset());
-        _pf.STDOUBLE();
-      }
-      else if(std::dynamic_pointer_cast<cdk::reference_type>(node->type())->referenced()->name() == cdk::TYPE_INT){
-        _pf.DUP32();
-        _pf.LOCAL(symb->offset());
-        _pf.STINT();
-      }
+      node->initializer()->accept(this, lvl);
     } 
     else if (node->is_typed(cdk::TYPE_STRING)) {
-      if (isGlobal()) {
-        int strlbl;
-        _pf.RODATA();
-        _pf.ALIGN();
-        _pf.LABEL(mklbl(strlbl = ++_lbl));
-        _pf.SSTRING(dynamic_cast<cdk::string_node*>(node->initializer())->value());
-        _pf.ALIGN();
-        _pf.LABEL(id);
-        _pf.SADDR(mklbl(strlbl));
-      } 
-      else {
-        _pf.DATA();
-        _pf.ALIGN();
-        _pf.LABEL(id);
         node->initializer()->accept(this, lvl);
-      }
     } 
     else {
       std::cerr << node->lineno() << ": '" << id << "' has unexpected initializer\n";
@@ -655,7 +640,16 @@ void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const 
 }
 
 void mml::postfix_writer::do_func_definition_node(mml::func_definition_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+
+  auto id = node->identifier();
+  std::shared_ptr<mml::symbol> symb = _symtab.find(id);
+  int typesize = node->type()->size();
+
+  if(symb != nullptr && isGlobal()) {
+    _pf.GLOBAL(id, _pf.OBJ());
+  }
+  
 }
 
 void mml::postfix_writer::do_func_call_node(mml::func_call_node * const node, int lvl) {

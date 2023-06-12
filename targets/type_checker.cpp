@@ -165,23 +165,6 @@ void mml::type_checker::do_rvalue_node(cdk::rvalue_node *const node, int lvl) {
 void mml::type_checker::do_assignment_node(cdk::assignment_node *const node, int lvl) {
   ASSERT_UNSPEC;
 
-  /*try {
-    node->lvalue()->accept(this, lvl);
-  } catch (const std::string &id) {
-    auto symbol = std::make_shared<mml::symbol>(cdk::primitive_type::create(4, cdk::TYPE_INT), id, 0);
-    _symtab.insert(id, symbol);
-    _parent->set_new_symbol(symbol);  // advise parent that a symbol has been inserted
-    node->lvalue()->accept(this, lvl);  //DAVID: bah!
-  }
-
-  if (!node->lvalue()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in left argument of assignment expression");
-
-  node->rvalue()->accept(this, lvl + 2);
-  if (!node->rvalue()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in right argument of assignment expression");
-
-  // in MML, expressions are always int
-  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));*/
-
   node->lvalue()->accept(this, lvl + 4);
   node->rvalue()->accept(this, lvl + 4);
 
@@ -289,7 +272,8 @@ void mml::type_checker::do_block_node(mml::block_node *const node, int lvl) {
 }
 
 void mml::type_checker::do_input_node(mml::input_node *const node, int lvl) {
-  // EMPTY
+  ASSERT_UNSPEC;
+  node->type(cdk::primitive_type::create(0, cdk::TYPE_UNSPEC));
 }
 
 void mml::type_checker::do_null_node(mml::null_node *const node, int lvl) {
@@ -371,8 +355,8 @@ void mml::type_checker::do_variable_decl_node(mml::variable_decl_node *const nod
   }
 }
 
-void mml::type_checker::do_func_definition_node(mml::func_definition_node *const node, int lvl) {
-  // EMPTY
+void mml::type_checker::do_func_definition_node(mml::func_definition_node *const node, int lvl) {  
+  //EMPTY
 }
 
 void mml::type_checker::do_func_call_node(mml::func_call_node *const node, int lvl) {
