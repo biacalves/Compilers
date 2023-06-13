@@ -208,8 +208,17 @@ void mml::postfix_writer::do_div_node(cdk::div_node * const node, int lvl) {
 
 void mml::postfix_writer::do_mod_node(cdk::mod_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+
   node->left()->accept(this, lvl);
+  if (node->type()->name() == cdk::TYPE_DOUBLE && node->left()->type()->name() == cdk::TYPE_INT) {
+    _pf.I2D();
+  }
+
   node->right()->accept(this, lvl);
+  if (node->type()->name() == cdk::TYPE_DOUBLE && node->right()->type()->name() == cdk::TYPE_INT) {
+    _pf.I2D();
+  }
+  
   _pf.MOD();
 }
 
@@ -426,6 +435,8 @@ void mml::postfix_writer::do_evaluation_node(mml::evaluation_node * const node, 
     _pf.TRASH(4); // delete the evaluated value's address
   } else if (node->argument()->is_typed(cdk::TYPE_DOUBLE)) {
     _pf.TRASH(8); // delete the evaluated value
+  } else if (node->argument()->is_typed(cdk::TYPE_POINTER)) {
+    _pf.TRASH(4); // delete the evaluated value's address
   } else {
     std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
     exit(1);
@@ -569,9 +580,16 @@ void mml::postfix_writer::do_index_node(mml::index_node * const node, int lvl) {
   node->ptr()->accept(this, lvl);
   node->index()->accept(this,lvl);
 
-  _pf.INT(node->type()->size());
-  _pf.MUL();
-  _pf.ADD();
+  if(node->ptr()->is_typed(cdk::TYPE_DOUBLE)) {
+    _pf.INT(3);
+    _pf.SHTL();
+    _pf.ADD();
+  } 
+  else { 
+    _pf.INT(2);
+    _pf.SHTL();
+    _pf.ADD();
+  }
 }
 
 void mml::postfix_writer::do_mem_alloc_node(mml::mem_alloc_node * const node, int lvl) {
@@ -648,7 +666,12 @@ void mml::postfix_writer::do_func_definition_node(mml::func_definition_node * co
 
   if(symb != nullptr && isGlobal()) {
     _pf.GLOBAL(id, _pf.OBJ());
+    _pf.BSS();
+    _pf.ALIGN();
+    _pf.LABEL(id);
+    _pf.SBYTE(typesize);
   }
+
   
 }
 

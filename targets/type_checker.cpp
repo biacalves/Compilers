@@ -347,8 +347,8 @@ void mml::type_checker::do_variable_decl_node(mml::variable_decl_node *const nod
   }
 
   if(!_symtab.find(node->identifier())) {
-    _symtab.insert(node->identifier(), std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto(), false));
-    _parent->set_new_symbol(std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto(), false));
+    _symtab.insert(node->identifier(), std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto()));
+    _parent->set_new_symbol(std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto()));
   }
   else {
     throw std::string("variable '" + node->identifier() + "' redeclared");
@@ -356,7 +356,14 @@ void mml::type_checker::do_variable_decl_node(mml::variable_decl_node *const nod
 }
 
 void mml::type_checker::do_func_definition_node(mml::func_definition_node *const node, int lvl) {  
-  //EMPTY
+
+  if(!_symtab.find(node->identifier())) {
+    _symtab.insert(node->identifier(), std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto()));
+    _parent->set_new_symbol(std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto()));
+  }
+  else {
+    throw std::string("function '" + node->identifier() + "' redeclared");
+  }
 }
 
 void mml::type_checker::do_func_call_node(mml::func_call_node *const node, int lvl) {

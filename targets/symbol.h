@@ -15,14 +15,22 @@ namespace mml {
     bool _isForward;
     bool _isForeign;
     bool _isAuto;
-    bool _isFunction;
+    //std::vector<std::shared_ptr<cdk::basic_type>> _vars;
+    //std::shared_ptr<cdk::basic_type> _returnValue;
+    //block_node *_block;
 
   public:
     symbol(std::shared_ptr<cdk::basic_type> type, const std::string &identifier, int offset, bool isPublic,
-    bool isForward, bool isForeign, bool isAuto, bool isFunction):
+    bool isForward, bool isForeign, bool isAuto):
         _type(type), _identifier(identifier), _offset(offset), _isPublic(isPublic), _isForward(isForward), _isForeign(isForeign),
-        _isAuto(isAuto), _isFunction(isFunction) {
+        _isAuto(isAuto) {
     }
+
+    /*symbol(std::shared_ptr<cdk::basic_type> type, const std::string &identifier, int offset, bool isPublic, bool isForward, 
+    bool isForeign, bool isAuto, std::vector<std::shared_ptr<cdk::basic_type>> vars):
+        _type(type), _identifier(identifier), _offset(offset), _isPublic(isPublic), _isForward(isForward), _isForeign(isForeign),
+        _isAuto(isAuto), _vars(vars) {
+    }*/
 
     virtual ~symbol() {
       // EMPTY
@@ -31,36 +39,54 @@ namespace mml {
     std::shared_ptr<cdk::basic_type> type() const {
       return _type;
     }
+
     bool is_typed(cdk::typename_type name) const {
       return _type->name() == name;
     }
+
     const std::string &identifier() const {
       return _identifier;
     }
+
     int offset(){
       return _offset;
     }
+
     void offset(int offset){
       _offset = offset;
     }
+
     bool isPublic() {
       return _isPublic;
     }
+
     void isPublic(bool isPublic) {
       _isPublic = isPublic;
     }
+
     bool isForward() {
       return _isForward;
     }
+
     bool isForeign() {
       return _isForeign;
     }
+
     bool isAuto() {
       return _isAuto;
     }
-    bool isFunction() {
-      return _isFunction;
-    } 
+
+    /*std::vector<std::shared_ptr<cdk::basic_type>> vars() {
+      return _vars;
+    }*/
+
+    /*std::shared_ptr<cdk::basic_type> returnValue() {
+      return _returnValue;
+    }
+
+    block_node *block() {
+      return _block;
+    }*/
   };
 
 } // mml

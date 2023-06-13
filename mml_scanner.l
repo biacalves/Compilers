@@ -17,12 +17,13 @@ static std::ostringstream strlit;
 #define yyerror LexerError
 %}
 
-SPACE     ([ \t\r]|\n)
+SPACE         ([ \t\r]|\n)
 B10_INT       [1-9][0-9]*|0  
 B8_INT        0[0-7]+ 
+DOUBLE        ([0-9]*\.[0-9]+|[0-9]+\.[0-9]*)([eE][-+]?[0-9]+)?
 
-LETTER  [A-Za-z_]
-IDENTIFIER   {LETTER}({LETTER}|[[:digit:]])*
+LETTER        [A-Za-z_]
+IDENTIFIER    {LETTER}({LETTER}|[[:digit:]])*
 
 %x X_COMMENT
 %x X_STRING  X_BACKSLASH   X_CHAR    X_CHAR_END
@@ -73,16 +74,15 @@ IDENTIFIER   {LETTER}({LETTER}|[[:digit:]])*
 
 [-%\]{}()<>!*/~+&|[;?,=.@]               return *yytext;
 
-[A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
+[A-Za-z][A-Za-z0-9_]*       yylval.s = new std::string(yytext); return tIDENTIFIER;
 
 
 
-{B10_INT}                  yylval.i = strtoul(yytext, NULL, 10); return tINTEGER;
-{B8_INT}                  yylval.i = strtoul(yytext, NULL, 8); return tINTEGER;
+{B10_INT}                   yylval.i = strtol(yytext, NULL, 10); return tINTEGER;
+{B8_INT}                    yylval.i = strtol(yytext, NULL, 8); return tINTEGER;
 
 
-([0-9]*\.[0-9]+|[0-9]+\.[0-9]*)([eE][-+]?[0-9]+)? { yylval.d = strtod(yytext, NULL); return tDOUBLE; }
-
+{DOUBLE}                    yylval.d = strtof(yytext, NULL); return tDOUBLE; 
 
 "//".*$                /* match the whole line (it is ignored) */
 
