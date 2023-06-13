@@ -612,28 +612,26 @@ void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const 
   ASSERT_SAFE_EXPRESSIONS;
 
   auto id = node->identifier();
-  std::shared_ptr<mml::symbol> symb = _symtab.find(id);
+  //std::shared_ptr<mml::symbol> symb = _symtab.find(id);
   int typesize = node->type()->size();
 
-  if(symb != nullptr && isGlobal()) {
-    _pf.GLOBAL(id, _pf.OBJ());
-  }
-  
-  if (!node->initializer()) { //not initialized
+  if (node->initializer() == nullptr) { //not initialized
     _pf.BSS();
+    _pf.GLOBAL(id, _pf.OBJ());
     _pf.ALIGN();
     _pf.LABEL(id);
-    _pf.SBYTE(typesize);
-  } 
+    _pf.SALLOC(typesize);
+  }
   else { //initialized
     _pf.DATA();
+    _pf.GLOBAL(id, _pf.OBJ());
     _pf.ALIGN();
     _pf.LABEL(id);
 
     if(node->is_typed(cdk::TYPE_DOUBLE) && node->initializer()->is_typed(cdk::TYPE_INT)){
-      cdk::integer_node *intNode = dynamic_cast<cdk::integer_node*>(node->initializer());
-      cdk::double_node* i2dNode = new cdk::double_node(intNode->lineno(), intNode->value());
-      i2dNode->accept(this, lvl);
+      cdk::integer_node *dclini = dynamic_cast<cdk::integer_node*>(node->initializer());
+      cdk::double_node ddi (dclini->lineno(), dclini->value());
+      ddi.accept(this, lvl);
     } 
     else{
       node->initializer()->accept(this, lvl);
@@ -655,6 +653,9 @@ void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const 
       std::cerr << node->lineno() << ": '" << id << "' has unexpected initializer\n";
     }
   }
+  
+  
+  
 }
 
 void mml::postfix_writer::do_func_definition_node(mml::func_definition_node * const node, int lvl) {

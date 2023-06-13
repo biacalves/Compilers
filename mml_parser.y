@@ -34,17 +34,17 @@
   mml::block_node       *block;
 };
 
+%token <i> tINTEGER
+%token <d> tDOUBLE
+%token <s> tIDENTIFIER tSTRING
+
 %token tTYPE_INT tTYPE_DOUBLE tTYPE_STRING tTYPE_VOID 
 %token tFOREIGN tFORWARD tPUBLIC tAUTO
 %token tIF tELIF tELSE tWHILE tSTOP tNEXT tRETURN
 %token tINPUT tNULL tSIZEOF
 %token tBEGIN tEND
-%token tLT tGT tGE tLE tEQ tNE tAND tOR
+%token tAND tOR
 %token tPRINT tPRINTLN
-
-%token <i> tINTEGER
-%token <d> tDOUBLE
-%token <s> tIDENTIFIER tSTRING
 
 %nonassoc ')' 
 %nonassoc tELIF tELSE
@@ -58,15 +58,15 @@
 %left '*' '/' '%'
 %nonassoc '~'
 %nonassoc tUNARY
-%nonassoc '[' 
+%nonassoc '[' '('
 
 %type <node> program declaration instr function variable fvar ifs
 %type <sequence> declarations instrs exprs fvars
 %type <expression> expr funccall integer
-%type <lvalue> lval
-%type <type> type functype types
 %type <block> block
 %type <s> string
+%type <type> type functype types
+%type <lvalue> lval
 
 %{
 //-- The rules below will be included in yyparse, the main parsing function.
@@ -191,8 +191,8 @@ expr           : integer                                    { $$ = $1; }
                | tNULL                                      { $$ = new mml::null_node(LINE); }
                | string                                     { $$ = new cdk::string_node(LINE, $1); }
                | funccall                                   { $$ = $1; }
-               | '+' expr %prec tUNARY                      { $$ = $2; }
                | '-' expr %prec tUNARY                      { $$ = new cdk::neg_node(LINE, $2); }
+               | '+' expr %prec tUNARY                      { $$ = $2; }
                | '~' expr %prec tUNARY                      { $$ = new cdk::not_node(LINE, $2); }
                | expr '+' expr	                            { $$ = new cdk::add_node(LINE, $1, $3); }
                | expr '-' expr	                            { $$ = new cdk::sub_node(LINE, $1, $3); }
