@@ -38,6 +38,10 @@ namespace mml {
       return _isGlobal;
     }
 
+    inline void setGlobal(bool global){
+      _isGlobal = global;
+    }
+
   private:
     /** Method used to generate sequential labels. */
     inline std::string mklbl(int lbl) {

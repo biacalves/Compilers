@@ -623,6 +623,7 @@ void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const 
     _pf.SALLOC(typesize);
   }
   else { //initialized
+    setGlobal(true);
     _pf.DATA();
     _pf.GLOBAL(id, _pf.OBJ());
     _pf.ALIGN();
