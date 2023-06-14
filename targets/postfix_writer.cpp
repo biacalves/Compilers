@@ -376,6 +376,15 @@ void mml::postfix_writer::do_assignment_node(cdk::assignment_node * const node, 
   else
     _pf.DUP32();
 
+  if (new_symbol() != nullptr) {
+    _pf.DATA();
+    _pf.ALIGN();
+    _pf.LABEL(new_symbol()->identifier());
+    reset_new_symbol();
+    _pf.SINT(0);
+    _pf.TEXT();
+  }
+
   node->lvalue()->accept(this, lvl);
   if(node->lvalue()->is_typed(cdk::TYPE_DOUBLE)) {
     _pf.STDOUBLE();
@@ -612,8 +621,8 @@ void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const 
   ASSERT_SAFE_EXPRESSIONS;
 
   auto id = node->identifier();
-  //std::shared_ptr<mml::symbol> symb = _symtab.find(id);
   int typesize = node->type()->size();
+  setGlobal(true);
 
   if (node->initializer() == nullptr) { //not initialized
     _pf.BSS();
@@ -623,7 +632,6 @@ void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const 
     _pf.SALLOC(typesize);
   }
   else { //initialized
-    setGlobal(true);
     _pf.DATA();
     _pf.GLOBAL(id, _pf.OBJ());
     _pf.ALIGN();
@@ -653,10 +661,7 @@ void mml::postfix_writer::do_variable_decl_node(mml::variable_decl_node * const 
     else {
       std::cerr << node->lineno() << ": '" << id << "' has unexpected initializer\n";
     }
-  }
-  
-  
-  
+  }  
 }
 
 void mml::postfix_writer::do_func_definition_node(mml::func_definition_node * const node, int lvl) {

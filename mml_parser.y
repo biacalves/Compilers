@@ -102,7 +102,7 @@ variable       : tFOREIGN type tIDENTIFIER                  { $$ = new mml::vari
                | tFOREIGN tIDENTIFIER '=' expr              { $$ = new mml::variable_decl_node(LINE, false, false, true, false, *$2, $4);}
                | tFORWARD tIDENTIFIER '=' expr              { $$ = new mml::variable_decl_node(LINE, false, true, false, false, *$2, $4);}
                | tPUBLIC tIDENTIFIER '=' expr               { $$ = new mml::variable_decl_node(LINE, true, false, false, false, *$2, $4);}
-               | tIDENTIFIER '=' expr                       { $$ = new mml::variable_decl_node(LINE, false, false, false, false, *$1, $3);}
+//--               | tIDENTIFIER '=' expr                       { $$ = new mml::variable_decl_node(LINE, false, false, false, false, *$1, $3);}
                ;
 
 function       : tFOREIGN type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'      { $$ = new mml::func_definition_node(LINE, false, false, true, false, $2, *$3, $6, $10, $11);}
