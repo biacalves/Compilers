@@ -425,6 +425,7 @@ void mml::postfix_writer::do_program_node(mml::program_node * const node, int lv
   _pf.RET();
 
   // these are just a few library function imports
+  _pf.EXTERN("argc");
   _pf.EXTERN("readi");
   _pf.EXTERN("readd");
   _pf.EXTERN("printi");
@@ -668,17 +669,13 @@ void mml::postfix_writer::do_func_definition_node(mml::func_definition_node * co
   ASSERT_SAFE_EXPRESSIONS;
 
   auto id = node->identifier();
-  std::shared_ptr<mml::symbol> symb = _symtab.find(id);
-  int typesize = node->type()->size();
+  //int typesize = node->type()->size();
+  setGlobal(true);
 
-  if(symb != nullptr && isGlobal()) {
-    _pf.GLOBAL(id, _pf.OBJ());
-    _pf.BSS();
-    _pf.ALIGN();
-    _pf.LABEL(id);
-    _pf.SBYTE(typesize);
-  }
 
+
+  node->variables()->accept(this, lvl);
+  node->block()->accept(this, lvl);
   
 }
 

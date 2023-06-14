@@ -15,22 +15,14 @@ namespace mml {
     bool _isForward;
     bool _isForeign;
     bool _isAuto;
-    //std::vector<std::shared_ptr<cdk::basic_type>> _vars;
-    //std::shared_ptr<cdk::basic_type> _returnValue;
-    //block_node *_block;
+    bool _isFunction;
 
   public:
     symbol(std::shared_ptr<cdk::basic_type> type, const std::string &identifier, int offset, bool isPublic,
-    bool isForward, bool isForeign, bool isAuto):
+      bool isForward, bool isForeign, bool isAuto, bool isFunction):
         _type(type), _identifier(identifier), _offset(offset), _isPublic(isPublic), _isForward(isForward), _isForeign(isForeign),
-        _isAuto(isAuto) {
+        _isAuto(isAuto), _isFunction(isFunction) {
     }
-
-    /*symbol(std::shared_ptr<cdk::basic_type> type, const std::string &identifier, int offset, bool isPublic, bool isForward, 
-    bool isForeign, bool isAuto, std::vector<std::shared_ptr<cdk::basic_type>> vars):
-        _type(type), _identifier(identifier), _offset(offset), _isPublic(isPublic), _isForward(isForward), _isForeign(isForeign),
-        _isAuto(isAuto), _vars(vars) {
-    }*/
 
     virtual ~symbol() {
       // EMPTY
@@ -76,17 +68,13 @@ namespace mml {
       return _isAuto;
     }
 
-    /*std::vector<std::shared_ptr<cdk::basic_type>> vars() {
-      return _vars;
-    }*/
-
-    /*std::shared_ptr<cdk::basic_type> returnValue() {
-      return _returnValue;
+    int isFunction(){
+      return _isFunction;
     }
 
-    block_node *block() {
-      return _block;
-    }*/
+    void isFunction(int function){
+      _isFunction = function;
+    }
   };
 
 } // mml

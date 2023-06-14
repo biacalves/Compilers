@@ -183,7 +183,7 @@ block          : '{' declarations instrs '}'                { $$ = new mml::bloc
                ;
 
 funccall       : tIDENTIFIER '('  ')'                       { $$ = new mml::func_call_node(LINE, *$1, new cdk::sequence_node(LINE));}
-               | tIDENTIFIER '(' exprs ')'                  { $$ = new mml::func_call_node(LINE, *$1, $3);}
+               | tIDENTIFIER '(' exprs ')'                 { $$ = new mml::func_call_node(LINE, *$1, $3);}
                ;
 
 expr           : integer                                    { $$ = $1; }
@@ -210,14 +210,14 @@ expr           : integer                                    { $$ = $1; }
                | tINPUT                                     { $$ = new mml::input_node(LINE); }
                | tSIZEOF '(' expr ')'                       { $$ = new mml::sizeof_node(LINE, $3); }
                | '@' '(' expr ')'                           { $$ = $3; } 
-               | lval '?'                                   { $$ = new mml::address_node(LINE, $1);}
                | lval                                       { $$ = new cdk::rvalue_node(LINE, $1); }  //FIXME
+               | lval '?'                                   { $$ = new mml::address_node(LINE, $1);}
                | lval '=' expr                              { $$ = new cdk::assignment_node(LINE, $1, $3); }
                | '[' expr ']'                               { $$ = new mml::mem_alloc_node(LINE, $2);}
                | '(' expr ')'                               { $$ = $2; }
                ;
 
-lval           : tIDENTIFIER                                { $$ = new cdk::variable_node(LINE, $1); delete $1;}
+lval           : tIDENTIFIER %prec tUNARY                   { $$ = new cdk::variable_node(LINE, $1); delete $1;}
                | expr '[' expr ']'                          { $$ = new mml::index_node(LINE, $1, $3);}
                ;
 
