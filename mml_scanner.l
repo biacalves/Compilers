@@ -31,8 +31,6 @@ IDENTIFIER    {LETTER}({LETTER}|[[:digit:]])*
 %%
   yydebug=1; set_debug(1);
 
-"--".*                 ; /* ignore comments */
-
 "int"                  return tTYPE_INT;
 "double"               return tTYPE_DOUBLE;
 "string"               return tTYPE_STRING;

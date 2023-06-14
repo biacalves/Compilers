@@ -6,4 +6,7 @@ mml
 *.output
 *.tab.c
 *.tab.h
-mml_scanner.cpp
+mml_scanner.cpp`
+/tests/
+check-expected.sh
+
