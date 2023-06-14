@@ -405,7 +405,7 @@ void mml::postfix_writer::do_program_node(mml::program_node * const node, int lv
   if (node->declarations() != nullptr) {
     node->declarations()->accept(this, lvl);
   }
-  if ( node->instructions() != nullptr) {
+  if (node->instructions() != nullptr) {
     node->instructions()->accept(this, lvl);
   }
   
