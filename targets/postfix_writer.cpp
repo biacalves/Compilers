@@ -25,6 +25,7 @@ void mml::postfix_writer::do_double_node(cdk::double_node * const node, int lvl)
 
 void mml::postfix_writer::do_not_node(cdk::not_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+
   node->argument()->accept(this, lvl + 2);
   _pf.INT(0);
   _pf.EQ();
@@ -68,6 +69,7 @@ void mml::postfix_writer::do_sequence_node(cdk::sequence_node * const node, int 
 
 void mml::postfix_writer::do_integer_node(cdk::integer_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
+  
   if (isGlobal()) { 
     _pf.SINT(node->value()); // integer literal is on the DATA segment
   } else {
@@ -376,7 +378,7 @@ void mml::postfix_writer::do_assignment_node(cdk::assignment_node * const node, 
   else
     _pf.DUP32();
 
-  if (new_symbol() != nullptr) {
+  if (new_symbol() != nullptr) { //int x=0 para o while
     _pf.DATA();
     _pf.ALIGN();
     _pf.LABEL(new_symbol()->identifier());
@@ -447,7 +449,10 @@ void mml::postfix_writer::do_evaluation_node(mml::evaluation_node * const node, 
     _pf.TRASH(8); // delete the evaluated value
   } else if (node->argument()->is_typed(cdk::TYPE_POINTER)) {
     _pf.TRASH(4); // delete the evaluated value's address
-  } else {
+  } 
+  else if (node->argument()->is_typed(cdk::TYPE_VOID)) {
+  }
+  else {
     std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
     exit(1);
   }
@@ -488,13 +493,21 @@ void mml::postfix_writer::do_print_node(mml::print_node * const node, int lvl) {
 
 void mml::postfix_writer::do_while_node(mml::while_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
-  int lbl1, lbl2;
-  _pf.LABEL(mklbl(lbl1 = ++_lbl));
+
+  std::string condition = mklbl(++_lbl);
+  _next.push_back(condition);
+  std::string end = mklbl(++_lbl);
+  _stop.push_back(end);
+
+  _pf.LABEL(condition);
   node->condition()->accept(this, lvl);
-  _pf.JZ(mklbl(lbl2 = ++_lbl));
+  _pf.JZ(end);
   node->block()->accept(this, lvl + 2);
-  _pf.JMP(mklbl(lbl1));
-  _pf.LABEL(mklbl(lbl2));
+  _pf.JMP(condition);
+  _pf.LABEL(end);
+
+  _next.pop_back();
+  _stop.pop_back();
 }
 
 //---------------------------------------------------------------------------
@@ -525,11 +538,32 @@ void mml::postfix_writer::do_if_else_node(mml::if_else_node * const node, int lv
 //---------------------------------------------------------------------------
 
 void mml::postfix_writer::do_stop_node(mml::stop_node * const node, int lvl) {
-  // EMPTY
+
+  if(_stop.empty()){
+    throw std::string("Stop instruction not in a cycle");
+  }
+  else{
+    if(node->level() == -1){
+      _pf.JMP(_stop.back());
+    }
+    else{
+      _pf.JMP(_stop.at(node->level()-1));
+    }
+  }
 }
 
 void mml::postfix_writer::do_next_node(mml::next_node * const node, int lvl) {
-  // EMPTY
+  if(_next.empty()){
+    throw std::string("Next instruction not in a cycle");
+  }
+  else{
+    if(node->level() == -1){
+      _pf.JMP(_next.back());
+    }
+    else{
+      _pf.JMP(_next.at(node->level()-1));
+    }
+  }
 }
 
 void mml::postfix_writer::do_return_node(mml::return_node * const node, int lvl) {
@@ -608,8 +642,8 @@ void mml::postfix_writer::do_mem_alloc_node(mml::mem_alloc_node * const node, in
   node->argument()->accept(this, lvl);
   _pf.INT(3);
   _pf.SHTL();
-  _pf.ALLOC(); // allocate
-  _pf.SP(); // put base pointer in stack
+  _pf.ALLOC();
+  _pf.SP();
 }
 
 void mml::postfix_writer::do_address_node(mml::address_node * const node, int lvl) {
@@ -669,14 +703,10 @@ void mml::postfix_writer::do_func_definition_node(mml::func_definition_node * co
   ASSERT_SAFE_EXPRESSIONS;
 
   auto id = node->identifier();
-  //int typesize = node->type()->size();
   setGlobal(true);
-
-
 
   node->variables()->accept(this, lvl);
   node->block()->accept(this, lvl);
-  
 }
 
 void mml::postfix_writer::do_func_call_node(mml::func_call_node * const node, int lvl) {

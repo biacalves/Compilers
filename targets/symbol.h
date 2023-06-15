@@ -52,10 +52,6 @@ namespace mml {
       return _isPublic;
     }
 
-    void isPublic(bool isPublic) {
-      _isPublic = isPublic;
-    }
-
     bool isForward() {
       return _isForward;
     }
@@ -72,9 +68,6 @@ namespace mml {
       return _isFunction;
     }
 
-    void isFunction(int function){
-      _isFunction = function;
-    }
   };
 
 } // mml

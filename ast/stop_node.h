@@ -9,15 +9,15 @@ namespace mml {
    * Class for describing stop nodes.
    */
   class stop_node: public cdk::basic_node {
-    cdk::expression_node *_level;
+    int _level;
 
   public:
-    inline stop_node(int lineno, cdk::expression_node *level) :
+    inline stop_node(int lineno, int level) :
         cdk::basic_node(lineno), _level(level) {
     }
 
   public:
-    inline cdk::expression_node *level()  {
+    inline int level()  {
       return _level;
     }
 

@@ -13,15 +13,15 @@ namespace mml {
   //! Traverse syntax tree and generate the corresponding assembly code.
   //!
   class postfix_writer: public basic_ast_visitor {
-    bool _inFunctionBody;
     std::set<std::string> _functions_to_declare;
-    std::shared_ptr<mml::symbol> _function; // for keeping track of the current function and its arguments
 
     cdk::symbol_table<mml::symbol> &_symtab;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;
 
     bool _isGlobal;
+    std::vector<std::string> _next;
+    std::vector<std::string> _stop;
     
   public:
     postfix_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<mml::symbol> &symtab,

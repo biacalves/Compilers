@@ -17,13 +17,16 @@ void mml::type_checker::do_sequence_node(cdk::sequence_node *const node, int lvl
 void mml::type_checker::do_nil_node(cdk::nil_node *const node, int lvl) {
   // EMPTY
 }
+
 void mml::type_checker::do_data_node(cdk::data_node *const node, int lvl) {
   // EMPTY
 }
+
 void mml::type_checker::do_double_node(cdk::double_node *const node, int lvl) {
   ASSERT_UNSPEC;
   node->type(cdk::primitive_type::create(8, cdk::TYPE_DOUBLE));
 }
+
 void mml::type_checker::do_not_node(cdk::not_node *const node, int lvl) {
   ASSERT_UNSPEC;
   node->argument()->accept(this, lvl + 2);
@@ -36,9 +39,11 @@ void mml::type_checker::do_not_node(cdk::not_node *const node, int lvl) {
     throw std::string("wrong type in unary logical expression");
   }
 }
+
 void mml::type_checker::do_and_node(cdk::and_node *const node, int lvl) {
   processBinaryExpression(node, lvl);
 }
+
 void mml::type_checker::do_or_node(cdk::or_node *const node, int lvl) {
   processBinaryExpression(node, lvl);
 }
@@ -152,7 +157,7 @@ void mml::type_checker::do_variable_node(cdk::variable_node *const node, int lvl
   if (symbol != nullptr) {
     node->type(symbol->type());
   } else {
-    throw id;
+    throw "undeclared variable '" + id + "'";
   }
 }
 
@@ -230,7 +235,6 @@ void mml::type_checker::do_assignment_node(cdk::assignment_node *const node, int
 void mml::type_checker::do_program_node(mml::program_node *const node, int lvl) {
   node->declarations()->accept(this, lvl);
   node->instructions()->accept(this, lvl);
-  
 }
 
 void mml::type_checker::do_evaluation_node(mml::evaluation_node *const node, int lvl) {
@@ -295,7 +299,6 @@ void mml::type_checker::do_index_node(mml::index_node *const node, int lvl) {
   ASSERT_UNSPEC;
 
   node->ptr()->accept(this, lvl);
-
   if(!node->ptr()->is_typed(cdk::TYPE_POINTER)){
     throw std::string("Wrong type for base in pointer.");
   }
@@ -310,6 +313,7 @@ void mml::type_checker::do_index_node(mml::index_node *const node, int lvl) {
 
 void mml::type_checker::do_mem_alloc_node(mml::mem_alloc_node *const node, int lvl) {
   ASSERT_UNSPEC;
+
   node->argument()->accept(this, lvl + 2);
   if (!node->argument()->is_typed(cdk::TYPE_INT)) {
     throw std::string("integer expression expected in allocation expression");
@@ -318,6 +322,7 @@ void mml::type_checker::do_mem_alloc_node(mml::mem_alloc_node *const node, int l
 
 void mml::type_checker::do_address_node(mml::address_node *const node, int lvl) {
   ASSERT_UNSPEC;
+
   node->lvalue()->accept(this, lvl + 2);
   node->type(cdk::reference_type::create(4, node->lvalue()->type()));
 }
@@ -351,7 +356,7 @@ void mml::type_checker::do_variable_decl_node(mml::variable_decl_node *const nod
   }
 
   if(!_symtab.find(node->identifier())) {
-    _symtab.insert(node->identifier(), std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto(), false));
+    _symtab.insert(node->identifier(), std::make_shared<mml::symbol>(node->type(), node->identifier(), -(node->type()->size()), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto(), false));
     _parent->set_new_symbol(std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto(), false));
   }
   else {
@@ -360,10 +365,8 @@ void mml::type_checker::do_variable_decl_node(mml::variable_decl_node *const nod
 }
 
 void mml::type_checker::do_func_definition_node(mml::func_definition_node *const node, int lvl) {  
-  //TIPOS DAS FUNCOES
-
   if(!_symtab.find(node->identifier())) {
-    _symtab.insert(node->identifier(), std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto(), true));
+    _symtab.insert(node->identifier(), std::make_shared<mml::symbol>(node->type(), node->identifier(), -(node->type()->size()), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto(), true));
     _parent->set_new_symbol(std::make_shared<mml::symbol>(node->type(), node->identifier(), -node->type()->size(), node->isPublic(), node->isForward(), node->isForeign(), node->isAuto(), true));
   }
   else {

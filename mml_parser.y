@@ -52,7 +52,7 @@
 %right '='
 %left tOR
 %left tAND
-%right '~'
+%nonassoc '~'
 %left tNE tEQ
 %left tLT tLE tGE tGT 
 %left '+' '-'
@@ -62,7 +62,7 @@
 
 %type <node> program declaration instr function variable fvar ifs
 %type <sequence> declarations instrs exprs fvars
-%type <expression> expr funccall integer
+%type <expression> expr funccall
 %type <block> block
 %type <s> string
 %type <type> type functype types
@@ -102,7 +102,6 @@ variable       : tFOREIGN type tIDENTIFIER                  { $$ = new mml::vari
                | tFOREIGN tIDENTIFIER '=' expr              { $$ = new mml::variable_decl_node(LINE, false, false, true, false, *$2, $4);}
                | tFORWARD tIDENTIFIER '=' expr              { $$ = new mml::variable_decl_node(LINE, false, true, false, false, *$2, $4);}
                | tPUBLIC tIDENTIFIER '=' expr               { $$ = new mml::variable_decl_node(LINE, true, false, false, false, *$2, $4);}
-//--               | tIDENTIFIER '=' expr                       { $$ = new mml::variable_decl_node(LINE, false, false, false, false, *$1, $3);}
                ;
 
 function       : tFOREIGN type tIDENTIFIER '=' '(' fvars ')' '-' '>' type block ';'      { $$ = new mml::func_definition_node(LINE, false, false, true, false, $2, *$3, $6, $10, $11);}
@@ -156,10 +155,10 @@ instrs         : instr                                      { $$ = new cdk::sequ
 instr          : expr ';'                                   { $$ = new mml::evaluation_node(LINE, $1);}
                | exprs tPRINT                               { $$ = new mml::print_node(LINE, $1, false);}
                | exprs tPRINTLN                             { $$ = new mml::print_node(LINE, $1, true);}
-               | tSTOP integer ';'                          { $$ = new mml::stop_node(LINE, $2);}
-               | tSTOP ';'                                  { $$ = new mml::stop_node(LINE, nullptr);}
-               | tNEXT integer ';'                          { $$ = new mml::next_node(LINE, $2);}
-               | tNEXT ';'                                  { $$ = new mml::next_node(LINE, nullptr);}
+               | tSTOP tINTEGER ';'                         { $$ = new mml::stop_node(LINE, $2);}
+               | tSTOP ';'                                  { $$ = new mml::stop_node(LINE, -1);}
+               | tNEXT tINTEGER ';'                         { $$ = new mml::next_node(LINE, $2);}
+               | tNEXT ';'                                  { $$ = new mml::next_node(LINE, -1);}
                | tRETURN expr ';'                           { $$ = new mml::return_node(LINE, $2);}
                | tRETURN ';'                                { $$ = new mml::return_node(LINE, nullptr);}
                | tIF ifs                                    { $$ = $2; }
@@ -183,10 +182,10 @@ block          : '{' declarations instrs '}'                { $$ = new mml::bloc
                ;
 
 funccall       : tIDENTIFIER '('  ')'                       { $$ = new mml::func_call_node(LINE, *$1, new cdk::sequence_node(LINE));}
-               | tIDENTIFIER '(' exprs ')'                 { $$ = new mml::func_call_node(LINE, *$1, $3);}
+               | tIDENTIFIER '(' exprs ')'                  { $$ = new mml::func_call_node(LINE, *$1, $3);}
                ;
 
-expr           : integer                                    { $$ = $1; }
+expr           : tINTEGER                                   { $$ = new cdk::integer_node(LINE, $1); };
                | tDOUBLE                                    { $$ = new cdk::double_node(LINE, $1); }
                | tNULL                                      { $$ = new mml::null_node(LINE); }
                | string                                     { $$ = new cdk::string_node(LINE, $1); }
@@ -210,7 +209,7 @@ expr           : integer                                    { $$ = $1; }
                | tINPUT                                     { $$ = new mml::input_node(LINE); }
                | tSIZEOF '(' expr ')'                       { $$ = new mml::sizeof_node(LINE, $3); }
                | '@' '(' expr ')'                           { $$ = $3; } 
-               | lval                                       { $$ = new cdk::rvalue_node(LINE, $1); }  //FIXME
+               | lval                                       { $$ = new cdk::rvalue_node(LINE, $1); }
                | lval '?'                                   { $$ = new mml::address_node(LINE, $1);}
                | lval '=' expr                              { $$ = new cdk::assignment_node(LINE, $1, $3); }
                | '[' expr ']'                               { $$ = new mml::mem_alloc_node(LINE, $2);}
@@ -224,9 +223,5 @@ lval           : tIDENTIFIER %prec tUNARY                   { $$ = new cdk::vari
 string         : tSTRING                                    { $$ = $1; }
                | string tSTRING                             { $$ = $1; $$->append(*$2); delete $2; }
                ;
-
-integer        : tINTEGER                                   { $$ = new cdk::integer_node(LINE, $1); };
-               ;
-
 
 %%
